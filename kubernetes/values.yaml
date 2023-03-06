@@ -1,0 +1,11 @@
+operator:
+  pullPolicy: IfNotPresent
+  replicas: 1
+  image: pannoi/kafka-schema-opereator
+  version: 0.1.0
+
+schemaRegistry:
+  host:
+  port:
+  apiKey:
+  apiSecret:

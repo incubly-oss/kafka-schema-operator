@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubernetes.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 65532
+      targetPort: 65532
+      protocol: TCP
+      name: app
+  selector:
+    {{- include "kubernetes.selectorLabels" . | nindent 4 }}

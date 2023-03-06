@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubernetes.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.operator.replicas }}
+  selector:
+    matchLabels:
+      {{- include "kubernetes.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "kubernetes.selectorLabels" . | nindent 8 }}
+        {{- with .Values.deploy.labels }}
+        {{- toYaml . | nindent 8}}
+        {{- end }}
+    spec:
+      {{- with .Values.deploy.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Release.Name}}
+          image: "{{ .Values.operator.image }}:{{ .Values.operator.version }}"
+          imagePullPolicy: {{ .Values.operator.pullPolicy }}
+          env:
+            - name: SCHEMA_REGISTRY_HOST
+              value: {{ .Values.schemaRegistry.host }}
+            - name: SCHEMA_REGISTRY_PORT
+              value: {{ .Values.schemaRegistry.port }}
+            - name: SCHEMA_REGISTRY_KEY
+              value: {{ .Values.schemaRegistry.key }}
+            - name: SCHEMA_REGISTRY_SECRET
+              value: {{ .Values.schemaRegistry.secret }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
