@@ -14,28 +14,21 @@ spec:
     metadata:
       labels:
         {{- include "kubernetes.selectorLabels" . | nindent 8 }}
-        {{- with .Values.deploy.labels }}
-        {{- toYaml . | nindent 8}}
-        {{- end }}
     spec:
-      {{- with .Values.deploy.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       containers:
         - name: {{ .Release.Name}}
           image: "{{ .Values.operator.image }}:{{ .Values.operator.version }}"
           imagePullPolicy: {{ .Values.operator.pullPolicy }}
           env:
             - name: SCHEMA_REGISTRY_HOST
-              value: {{ .Values.schemaRegistry.host }}
+              value: "{{ .Values.schemaRegistry.host }}"
             - name: SCHEMA_REGISTRY_PORT
-              value: {{ .Values.schemaRegistry.port }}
+              value: "{{ .Values.schemaRegistry.port }}"
             - name: SCHEMA_REGISTRY_KEY
               value: {{ .Values.schemaRegistry.key }}
             - name: SCHEMA_REGISTRY_SECRET
               value: {{ .Values.schemaRegistry.secret }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.targetPort }}
+              containerPort: 65532
               protocol: TCP

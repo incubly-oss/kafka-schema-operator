@@ -6,6 +6,8 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.10.0
   creationTimestamp: null
   name: kafkaschemas.kafka-schema-operator.pannoi
+  labels:
+    {{- include "kubernetes.labels" . | nindent 4 }}
 spec:
   group: kafka-schema-operator.pannoi
   names:

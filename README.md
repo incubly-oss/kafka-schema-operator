@@ -11,8 +11,6 @@ Schema First approach should be implemented if you are using `schema-registry` a
 * [Confluent](https://github.com/confluentinc/schema-registry)
 * [Strimzi](https://github.com/lsst-sqre/strimzi-registry-operator)
 
-> To be continued...
-
 ### Operator features
 
 * Create schemas declaratively via CRD
@@ -22,6 +20,9 @@ Schema First approach should be implemented if you are using `schema-registry` a
 ## Installation
 
 ```bash
+helm repo add kafka-schema-operator https://pannoi.github.io/kafka-schema-operator-helm/
+helm repo update
+helm upgrade --install kafka-schema-operator kafka-schema-operator/kafka-schema-operator --values values.yaml
 ```
 
 You need to set `SCHEMA_REGSITRY_HOST` and `SCHEMA_REGSITRY_PORT` initial functionality
@@ -32,12 +33,14 @@ schemaRegistry:
   port:
 ```
 
-If your schema registry needs API authentication add Key and Secret values
+If your schema registry needs API authentication add Key and Secret values in addition to host and port
 ```yaml
 schemaRegistry:
   apiKey:
   apiSecret:
 ```
+
+> You can refer from `secretRef`
 
 > For more values check default [values](kubernetes/values.yaml)
 
@@ -75,7 +78,7 @@ spec:
   name: testing
   schemaSerializer: string
   data:
-    configRef: kafka-schema # ConfigMap name
+    configRef: kafka-schema # ConfigMap
     format: avro
 ```
 
