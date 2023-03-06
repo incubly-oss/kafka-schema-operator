@@ -83,8 +83,3 @@ spec:
 ```
 
 > Resource should be located in same `namespace`
-
-__Examples:__
-- [Custom Resource Definition](examples/crd.yaml)
-- [Configmap](examples/configmap.yaml)
-- [KafkaSchema](examples/schema.yaml)
