@@ -15,6 +15,7 @@ spec:
       labels:
         {{- include "kubernetes.selectorLabels" . | nindent 8 }}
     spec:
+    serviceAccountName: "{{ .Release.Name }}-service-account"
       containers:
         - name: {{ .Release.Name}}
           image: "{{ .Values.operator.image }}:{{ .Values.operator.version }}"
