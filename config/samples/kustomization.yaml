@@ -1,4 +1,0 @@
-## Append samples you want in your CSV to this file as resources ##
-resources:
-- kafka-schema-operator_v1beta1_kafkaschema.yaml
-#+kubebuilder:scaffold:manifestskustomizesamples
