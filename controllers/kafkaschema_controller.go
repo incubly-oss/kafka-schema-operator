@@ -126,7 +126,7 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	schemaKeyPayload.WriteString(schema.Spec.SchemaSerializer)
 	schemaKeyPayload.WriteString(`\"}"}`)
 
-	err = registerNewSchema(ctx, valueSchemaRegistryUrl, schemaKeyPayload.String())
+	err = registerNewSchema(ctx, keySchemaRegistryUrl, schemaKeyPayload.String())
 	if err != nil {
 		log.Error(err, "Failed to update schema registry")
 		return ctrl.Result{Requeue: true}, err
@@ -149,7 +149,7 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	schemaValuePayload.WriteString(strings.ToUpper(schema.Spec.Data.Format))
 	schemaValuePayload.WriteString(`"}`)
 
-	err = registerNewSchema(ctx, keySchemaRegistryUrl, schemaValuePayload.String())
+	err = registerNewSchema(ctx, valueSchemaRegistryUrl, schemaValuePayload.String())
 	if err != nil {
 		log.Error(err, "Failed to update schema registry")
 		return ctrl.Result{Requeue: true}, err
