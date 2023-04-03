@@ -45,8 +45,8 @@ type KafkaSchemaReconciler struct {
 func generateSchemaUrl(subject string) (string, error) {
 	schemaRegistryHost := os.Getenv("SCHEMA_REGISTRY_HOST")
 	schemaRegistryPort := os.Getenv("SCHEMA_REGISTRY_PORT")
-	if len(schemaRegistryHost) < 0 || len(schemaRegistryPort) < 0 {
-		return "", er.New("Schema registry or port is not set")
+	if len(schemaRegistryHost) == 0 || len(schemaRegistryPort) == 0 {
+		return "", er.New("schema registry or port is not set")
 	}
 	var url strings.Builder
 	url.WriteString("http://")
@@ -59,9 +59,26 @@ func generateSchemaUrl(subject string) (string, error) {
 	return url.String(), nil
 }
 
-func registerNewSchema(ctx context.Context, url string, payload string) error {
+func generateSchemaCompatibilityUrl(subject string) (string, error) {
+	schemaRegistryHost := os.Getenv("SCHEMA_REGISTRY_HOST")
+	schemaRegistryPort := os.Getenv("SCHEMA_REGISTRY_PORT")
+	if len(schemaRegistryHost) == 0 || len(schemaRegistryPort) == 0 {
+		return "", er.New("schema registry or port is not set")
+	}
+	var url strings.Builder
+	url.WriteString("http://")
+	url.WriteString(schemaRegistryHost)
+	url.WriteString(":")
+	url.WriteString(schemaRegistryPort)
+	url.WriteString("/config/")
+	url.WriteString(subject)
+
+	return url.String(), nil
+}
+
+func sendHttpRequest(ctx context.Context, url string, httpMethod string, payload string) error {
 	log := log.FromContext(ctx)
-	httpReq, _ := http.NewRequest("POST", url, strings.NewReader(payload))
+	httpReq, _ := http.NewRequest(httpMethod, url, strings.NewReader(payload))
 	httpReq.Header.Set("Content-Type", "application/vnd.schemaregistry.v1+json")
 	if len(os.Getenv("SCHEMA_REGISTRY_KEY")) > 0 || len(os.Getenv("SCHEMA_REGISTRY_SECRET")) > 0 {
 		httpReq.SetBasicAuth(os.Getenv("SCHEMA_REGISTRY_KEY"), os.Getenv("SCHEMA_REGISTRY_SECRET"))
@@ -121,12 +138,24 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	valueSchemaCompatibilityUrl, err := generateSchemaCompatibilityUrl(schemaValue)
+	if err != nil {
+		log.Error(err, "Cannot create schema compatibility url")
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	keySchemaCompatibilityUrl, err := generateSchemaCompatibilityUrl(schemaKey)
+	if err != nil {
+		log.Error(err, "Cannot create schema compatibility url")
+		return ctrl.Result{Requeue: true}, err
+	}
+
 	var schemaKeyPayload strings.Builder
 	schemaKeyPayload.WriteString(`{"schema": "{\"type\": \"`)
 	schemaKeyPayload.WriteString(schema.Spec.SchemaSerializer)
 	schemaKeyPayload.WriteString(`\"}"}`)
 
-	err = registerNewSchema(ctx, keySchemaRegistryUrl, schemaKeyPayload.String())
+	err = sendHttpRequest(ctx, keySchemaRegistryUrl, "POST", schemaKeyPayload.String())
 	if err != nil {
 		log.Error(err, "Failed to update schema registry")
 		return ctrl.Result{Requeue: true}, err
@@ -149,9 +178,26 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	schemaValuePayload.WriteString(strings.ToUpper(schema.Spec.Data.Format))
 	schemaValuePayload.WriteString(`"}`)
 
-	err = registerNewSchema(ctx, valueSchemaRegistryUrl, schemaValuePayload.String())
+	err = sendHttpRequest(ctx, valueSchemaRegistryUrl, "POST", schemaValuePayload.String())
 	if err != nil {
 		log.Error(err, "Failed to update schema registry")
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	var schemaCompatibilityPayload strings.Builder
+	schemaCompatibilityPayload.WriteString(`{"compatibility": "`)
+	schemaCompatibilityPayload.WriteString(schema.Spec.Data.Compatibility)
+	schemaCompatibilityPayload.WriteString(`"}`)
+
+	err = sendHttpRequest(ctx, valueSchemaCompatibilityUrl, "PUT", schemaCompatibilityPayload.String())
+	if err != nil {
+		log.Error(err, "Failed to update schema compatibility for value")
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	err = sendHttpRequest(ctx, keySchemaCompatibilityUrl, "PUT", schemaCompatibilityPayload.String())
+	if err != nil {
+		log.Error(err, "Failed to update schema compatibility for key")
 		return ctrl.Result{Requeue: true}, err
 	}
 

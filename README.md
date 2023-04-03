@@ -79,7 +79,8 @@ spec:
   schemaSerializer: string
   data:
     configRef: kafka-schema # ConfigMap
-    format: avro
+    format: avro # avro/protobuf/json
+    compatibility: # BACKWARD | BACKWARD_TRANSITIVE | FORWARD | FORWARD_TRANSITIVE | FULL | FULL_TRANSITIVE | NONE
 ```
 
 > Resource should be located in same `namespace`

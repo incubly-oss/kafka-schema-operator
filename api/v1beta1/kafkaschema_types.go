@@ -24,8 +24,9 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 type KafkaSchemaData struct {
-	ConfigRef string `json:"configRef"` // Reference to configmap with values
-	Format    string `json:"format"`    // avro/json/protobuf <-> schemeType:
+	ConfigRef     string `json:"configRef"`     // Reference to configmap with values
+	Format        string `json:"format"`        // avro/json/protobuf <-> schemeType:
+	Compatibility string `json:"compatibility"` // BACKWARD | BACKWARD_TRANSITIVE | FORWARD | FORWARD_TRANSITIVE | FULL | FULL_TRANSITIVE | NONE
 }
 
 // KafkaSchemaSpec defines the desired state of KafkaSchema
