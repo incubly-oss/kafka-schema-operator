@@ -53,6 +53,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kafka-schema
+  namespace: default
 data:
   schema: |
     {
@@ -74,13 +75,16 @@ apiVersion: kafka-schema-operator.pannoi/v1beta1
 kind: KafkaSchema
 metadata:
   name: kafka-schema
+  namespace: default
 spec:
   name: testing
   schemaSerializer: string
+  autoReconciliation: true # true = autoUpdate schema, false = for update CR should be re-created (not set => false)
+  terminationProtection: true # true = don't delete resources on CR deletion, false = when CR deleted, deletes all resource: ConfigMap, Schema from registry (not set => false)
   data:
     configRef: kafka-schema # ConfigMap
     format: avro # avro/protobuf/json
     compatibility: # BACKWARD | BACKWARD_TRANSITIVE | FORWARD | FORWARD_TRANSITIVE | FULL | FULL_TRANSITIVE | NONE
 ```
 
-> Resource should be located in same `namespace`
+> Resources (`KafkaSchema` & `ConfigMap`) should be located in same `namespace`
