@@ -31,9 +31,11 @@ type KafkaSchemaData struct {
 
 // KafkaSchemaSpec defines the desired state of KafkaSchema
 type KafkaSchemaSpec struct {
-	Name             string          `json:"name"`
-	SchemaSerializer string          `json:"schemaSerializer"`
-	Data             KafkaSchemaData `json:"data"`
+	Name                  string          `json:"name"`
+	SchemaSerializer      string          `json:"schemaSerializer"`
+	AutoReconciliation    bool            `json:"autoReconciliation,omitempty"`
+	TerminationProtection bool            `json:"terminationProtection,omitempty"`
+	Data                  KafkaSchemaData `json:"data"`
 }
 
 // KafkaSchemaStatus defines the observed state of KafkaSchema

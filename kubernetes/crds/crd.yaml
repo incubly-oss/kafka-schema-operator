@@ -35,6 +35,8 @@ spec:
           spec:
             description: KafkaSchemaSpec defines the desired state of KafkaSchema
             properties:
+              autoReconciliation:
+                type: boolean
               data:
                 properties:
                   compatibility:
@@ -52,6 +54,8 @@ spec:
                 type: string
               schemaSerializer:
                 type: string
+              terminationProtection:
+                type: boolean
             required:
             - data
             - name
