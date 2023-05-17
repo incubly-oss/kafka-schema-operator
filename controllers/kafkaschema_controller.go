@@ -36,6 +36,8 @@ import (
 	kafkaschemaoperatorv1beta1 "kafka-schema-operator/api/v1beta1"
 )
 
+const schemaFinilizers = "kafka-schema-operator.pannoi/finalizer"
+
 // KafkaSchemaReconciler reconciles a KafkaSchema object
 type KafkaSchemaReconciler struct {
 	client.Client
@@ -78,7 +80,12 @@ func generateSchemaCompatibilityUrl(subject string) (string, error) {
 
 func sendHttpRequest(ctx context.Context, url string, httpMethod string, payload string) error {
 	log := log.FromContext(ctx)
-	httpReq, _ := http.NewRequest(httpMethod, url, strings.NewReader(payload))
+	var httpReq *http.Request
+	if len(payload) == 0 {
+		httpReq, _ = http.NewRequest(httpMethod, url, nil)
+	} else {
+		httpReq, _ = http.NewRequest(httpMethod, url, strings.NewReader(payload))
+	}
 	httpReq.Header.Set("Content-Type", "application/vnd.schemaregistry.v1+json")
 	if len(os.Getenv("SCHEMA_REGISTRY_KEY")) > 0 || len(os.Getenv("SCHEMA_REGISTRY_SECRET")) > 0 {
 		httpReq.SetBasicAuth(os.Getenv("SCHEMA_REGISTRY_KEY"), os.Getenv("SCHEMA_REGISTRY_SECRET"))
