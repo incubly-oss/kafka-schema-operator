@@ -10,6 +10,7 @@
 
 ### Changed
   - Updated docs
+  - Move CRD to `kubernetes/crd/` folder
 
 ### Fixed 
   - Method `sendHttp` accepts nil payload
