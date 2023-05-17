@@ -116,11 +116,18 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	reconcileResult := ctrl.Result{}
+	if schema.Spec.AutoReconciliation {
+		reconcileResult = ctrl.Result{Requeue: true}
+	} else {
+		reconcileResult = ctrl.Result{}
+	}
+
 	cfg := &corev1.ConfigMap{}
 	err = r.Get(ctx, types.NamespacedName{Name: schema.Spec.Data.ConfigRef, Namespace: schema.Namespace}, cfg)
 	if err != nil {
 		log.Error(err, "Failed to find ConfigMap: "+schema.Spec.Data.ConfigRef)
-		return ctrl.Result{Requeue: true}, err
+		return reconcileResult, err
 	}
 
 	schemaKey := schema.Spec.Name + "-key"
@@ -129,25 +136,25 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	keySchemaRegistryUrl, err := generateSchemaUrl(schemaKey)
 	if err != nil {
 		log.Error(err, "Cannot create registry url")
-		return ctrl.Result{Requeue: true}, err
+		return reconcileResult, err
 	}
 
 	valueSchemaRegistryUrl, err := generateSchemaUrl(schemaValue)
 	if err != nil {
 		log.Error(err, "Cannot create registry url")
-		return ctrl.Result{Requeue: true}, err
+		return reconcileResult, err
 	}
 
 	valueSchemaCompatibilityUrl, err := generateSchemaCompatibilityUrl(schemaValue)
 	if err != nil {
 		log.Error(err, "Cannot create schema compatibility url")
-		return ctrl.Result{Requeue: true}, err
+		return reconcileResult, err
 	}
 
 	keySchemaCompatibilityUrl, err := generateSchemaCompatibilityUrl(schemaKey)
 	if err != nil {
 		log.Error(err, "Cannot create schema compatibility url")
-		return ctrl.Result{Requeue: true}, err
+		return reconcileResult, err
 	}
 
 	var schemaKeyPayload strings.Builder
@@ -158,7 +165,7 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	err = sendHttpRequest(ctx, keySchemaRegistryUrl, "POST", schemaKeyPayload.String())
 	if err != nil {
 		log.Error(err, "Failed to update schema registry")
-		return ctrl.Result{Requeue: true}, err
+		return reconcileResult, err
 	}
 	log.Info("Schema key was published: " + schemaKey)
 
@@ -181,7 +188,7 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	err = sendHttpRequest(ctx, valueSchemaRegistryUrl, "POST", schemaValuePayload.String())
 	if err != nil {
 		log.Error(err, "Failed to update schema registry")
-		return ctrl.Result{Requeue: true}, err
+		return reconcileResult, err
 	}
 
 	var schemaCompatibilityPayload strings.Builder
@@ -192,17 +199,17 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	err = sendHttpRequest(ctx, valueSchemaCompatibilityUrl, "PUT", schemaCompatibilityPayload.String())
 	if err != nil {
 		log.Error(err, "Failed to update schema compatibility for value")
-		return ctrl.Result{Requeue: true}, err
+		return reconcileResult, err
 	}
 
 	err = sendHttpRequest(ctx, keySchemaCompatibilityUrl, "PUT", schemaCompatibilityPayload.String())
 	if err != nil {
 		log.Error(err, "Failed to update schema compatibility for key")
-		return ctrl.Result{Requeue: true}, err
+		return reconcileResult, err
 	}
 
 	log.Info("Schema value was published: " + schemaValue)
-	return ctrl.Result{Requeue: true}, nil
+	return reconcileResult, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
