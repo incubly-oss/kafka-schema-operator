@@ -15,7 +15,7 @@ spec:
       labels:
         {{- include "kubernetes.selectorLabels" . | nindent 8 }}
     spec:
-    serviceAccountName: "{{ .Release.Name }}-service-account"
+      serviceAccountName: "{{ .Release.Name }}-service-account"
       containers:
         - name: {{ .Release.Name}}
           image: "{{ .Values.operator.image }}:{{ .Values.operator.version }}"
@@ -26,9 +26,9 @@ spec:
             - name: SCHEMA_REGISTRY_PORT
               value: "{{ .Values.schemaRegistry.port }}"
             - name: SCHEMA_REGISTRY_KEY
-              value: {{ .Values.schemaRegistry.key }}
+              value: {{ .Values.schemaRegistry.apiKey }}
             - name: SCHEMA_REGISTRY_SECRET
-              value: {{ .Values.schemaRegistry.secret }}
+              value: {{ .Values.schemaRegistry.apiSecret }}
           ports:
             - name: http
               containerPort: 65532
