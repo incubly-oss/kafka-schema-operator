@@ -15,7 +15,7 @@ spec:
     singular: kafkaschema
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - name: v2beta1
     schema:
       openAPIV3Schema:
         description: KafkaSchema is the Schema for the kafkaschemas API
@@ -41,13 +41,13 @@ spec:
                 properties:
                   compatibility:
                     type: string
-                  configRef:
+                  schema:
                     type: string
                   format:
                     type: string
                 required:
                 - compatibility
-                - configRef
+                - schema
                 - format
                 type: object
               name:

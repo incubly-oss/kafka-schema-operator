@@ -49,29 +49,7 @@ schemaRegistry:
 Deploy __ConfigMap__
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kafka-schema
-  namespace: default
-data:
-  schema: |
-    {
-      "namespace": "testing",
-      "type": "record",
-      "name": "testing",
-      "fields": [
-        {"name": "id", "type": "string"},
-        {"name": "email", "type": "string"}
-      ]
-    }
-
-```
-
-Refer to created ConfigMap via CustomResource __KafkaSchema__
-
-```yaml
-apiVersion: kafka-schema-operator.pannoi/v1beta1
+apiVersion: kafka-schema-operator.pannoi/v2beta1
 kind: KafkaSchema
 metadata:
   name: kafka-schema
@@ -82,9 +60,16 @@ spec:
   autoReconciliation: true # true = autoUpdate schema, false = for update CR should be re-created (not set => false)
   terminationProtection: true # true = don't delete resources on CR deletion, false = when CR deleted, deletes all resource: ConfigMap, Schema from registry (not set => false)
   data:
-    configRef: kafka-schema # ConfigMap
+    schema: |
+        {
+          "namespace": "testing",
+          "type": "record",
+          "name": "testing",
+          "fields": [
+            {"name": "id", "type": "string"},
+            {"name": "email", "type": "string"}
+          ]
+        }
     format: avro # avro/protobuf/json
     compatibility: # BACKWARD | BACKWARD_TRANSITIVE | FORWARD | FORWARD_TRANSITIVE | FULL | FULL_TRANSITIVE | NONE
 ```
-
-> Resources (`KafkaSchema` & `ConfigMap`) should be located in same `namespace`

@@ -25,16 +25,14 @@ import (
 	"strconv"
 	"strings"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	kafkaschemaoperatorv1beta1 "kafka-schema-operator/api/v1beta1"
+	kafkaschemaoperatorv2beta1 "kafka-schema-operator/api/v2beta1"
 )
 
 const schemaFinilizers = "kafka-schema-operator.pannoi/finalizer"
@@ -79,7 +77,7 @@ func generateSchemaCompatibilityUrl(subject string) (string, error) {
 	return url.String(), nil
 }
 
-func generateSchemaDeletionUrl(subject string) (string, error) {
+func generateSubjectDeletionUrl(subject string) (string, error) {
 	schemaRegistryHost := os.Getenv("SCHEMA_REGISTRY_HOST")
 	schemaRegistryPort := os.Getenv("SCHEMA_REGISTRY_PORT")
 	if len(schemaRegistryHost) == 0 || len(schemaRegistryPort) == 0 {
@@ -130,7 +128,7 @@ func sendHttpRequest(ctx context.Context, url string, httpMethod string, payload
 func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	schema := &kafkaschemaoperatorv1beta1.KafkaSchema{}
+	schema := &kafkaschemaoperatorv2beta1.KafkaSchema{}
 	err := r.Get(ctx, req.NamespacedName, schema)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -148,13 +146,6 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		reconcileResult = ctrl.Result{}
 	}
 
-	cfg := &corev1.ConfigMap{}
-	err = r.Get(ctx, types.NamespacedName{Name: schema.Spec.Data.ConfigRef, Namespace: schema.Namespace}, cfg)
-	if err != nil {
-		log.Error(err, "Failed to find ConfigMap: "+schema.Spec.Data.ConfigRef)
-		return reconcileResult, err
-	}
-
 	schemaKey := schema.Spec.Name + "-key"
 	schemaValue := schema.Spec.Name + "-value"
 
@@ -168,30 +159,25 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 				return ctrl.Result{}, err
 			}
 			log.Info("KafkaSchema CR was deleted: " + schema.Name)
-			err = r.Delete(ctx, cfg)
-			if err != nil {
-				log.Error(err, "Failed to delete ConfigMap: "+schema.Spec.Data.ConfigRef)
-				return ctrl.Result{}, err
-			}
-			log.Info("ConfigMap was deleted: " + schema.Spec.Data.ConfigRef)
-			keyDeletionUrl, err := generateSchemaDeletionUrl(schemaKey)
+
+			keyDeletionUrl, err := generateSubjectDeletionUrl(schemaKey)
 			if err != nil {
 				log.Error(err, "Cannot create deletion url")
 				return ctrl.Result{}, err
 			}
-			valueDeletionUrl, err := generateSchemaDeletionUrl(schemaValue)
+			valueDeletionUrl, err := generateSubjectDeletionUrl(schemaValue)
 			if err != nil {
 				log.Error(err, "Cannot create deletion url")
 				return ctrl.Result{}, err
 			}
 			err = sendHttpRequest(ctx, keyDeletionUrl, "DELETE", "")
 			if err != nil {
-				log.Error(err, "Failed to delete schema key from registry: "+schemaKey)
+				log.Error(err, "Failed to delete subject for key schema from registry: "+schemaKey)
 				return ctrl.Result{}, err
 			}
 			err = sendHttpRequest(ctx, valueDeletionUrl, "DELETE", "")
 			if err != nil {
-				log.Error(err, "Failed to delete schema value from registry: "+schemaValue)
+				log.Error(err, "Failed to delete subject for value schema from registry: "+schemaValue)
 				return ctrl.Result{}, err
 			}
 			log.Info("Schema was removed from registry")
@@ -204,10 +190,10 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		controllerutil.AddFinalizer(schema, schemaFinilizers)
 		err = r.Update(ctx, schema)
 		if err != nil {
-			log.Info("Failed to update finilizers for CR: " + schema.Name)
+			log.Info("Failed to update finalizers for CR: " + schema.Name)
 			return ctrl.Result{}, err
 		}
-		log.Info("Finilizers are set for CR: " + schema.Name)
+		log.Info("Finalizers are set for CR: " + schema.Name)
 	}
 
 	keySchemaRegistryUrl, err := generateSchemaUrl(schemaKey)
@@ -246,7 +232,7 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 	log.Info("Schema key was published: " + schemaKey)
 
-	cfgData := cfg.Data["schema"]
+	cfgData := schema.Spec.Data.Schema
 	cfgData = strings.ReplaceAll(cfgData, "\n", "")
 	cfgData = strings.ReplaceAll(cfgData, "\t", "")
 	cfgData = strings.ReplaceAll(cfgData, " ", "")
@@ -292,6 +278,6 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 // SetupWithManager sets up the controller with the Manager.
 func (r *KafkaSchemaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kafkaschemaoperatorv1beta1.KafkaSchema{}).
+		For(&kafkaschemaoperatorv2beta1.KafkaSchema{}).
 		Complete(r)
 }

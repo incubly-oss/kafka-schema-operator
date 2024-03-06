@@ -1,4 +1,15 @@
 # Changelog
+## [0.2.0] - 2024-03-05
+
+### Added
+
+### Changed
+- Version v2beta1 of the KafkaSchema custom resource: `spec.data.configRef` was replaced with `spec.data.schema` to simplify management of the resource (synchronization problems between K8S resources)
+
+### Fixed
+- Finalizer soft-deletes schema subject instead of removing compatibility model
+- deployment.yaml: `serviceAccountName` indentation
+- deployment.yaml: fixed references to values for `SCHEMA_REGISTRY_KEY` and `SCHEMA_REGISTRY_SECRET` env's
 
 ## [0.1.1] - 2023-05-17
 

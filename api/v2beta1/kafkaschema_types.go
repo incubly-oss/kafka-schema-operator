@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v2beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +24,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 type KafkaSchemaData struct {
-	ConfigRef     string `json:"configRef"`     // Reference to configmap with values
+	Schema        string `json:"schema"`        // schema blob (string with avro/json/protobuf schema)
 	Format        string `json:"format"`        // avro/json/protobuf <-> schemeType:
 	Compatibility string `json:"compatibility"` // BACKWARD | BACKWARD_TRANSITIVE | FORWARD | FORWARD_TRANSITIVE | FULL | FULL_TRANSITIVE | NONE
 }

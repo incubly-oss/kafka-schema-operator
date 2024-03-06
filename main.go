@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	kafkaschemaoperatorv1beta1 "kafka-schema-operator/api/v1beta1"
+	kafkaschemaoperatorv2beta1 "kafka-schema-operator/api/v2beta1"
 	"kafka-schema-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -44,7 +44,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(kafkaschemaoperatorv1beta1.AddToScheme(scheme))
+	utilruntime.Must(kafkaschemaoperatorv2beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
