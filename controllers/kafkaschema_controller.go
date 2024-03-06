@@ -90,9 +90,8 @@ func generateSchemaDeletionUrl(subject string) (string, error) {
 	url.WriteString(schemaRegistryHost)
 	url.WriteString(":")
 	url.WriteString(schemaRegistryPort)
-	url.WriteString("/config/")
+	url.WriteString("/subjects/")
 	url.WriteString(subject)
-	url.WriteString("?permanent=true")
 
 	return url.String(), nil
 }
