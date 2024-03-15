@@ -16,7 +16,7 @@ limitations under the License.
 
 // Package v2beta1 contains API Schema definitions for the kafka-schema-operator v2beta1 API group
 // +kubebuilder:object:generate=true
-// +groupName=kafka-schema-operator.pannoi
+// +groupName=kafka-schema-operator.incubly
 package v2beta1
 
 import (
@@ -26,7 +26,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "kafka-schema-operator.pannoi", Version: "v2beta1"}
+	GroupVersion = schema.GroupVersion{Group: "kafka-schema-operator.incubly", Version: "v2beta1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

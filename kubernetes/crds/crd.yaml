@@ -5,9 +5,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.10.0
   creationTimestamp: null
-  name: kafkaschemas.kafka-schema-operator.pannoi
+  name: kafkaschemas.kafka-schema-operator.incubly
 spec:
-  group: kafka-schema-operator.pannoi
+  group: kafka-schema-operator.incubly
   names:
     kind: KafkaSchema
     listKind: KafkaSchemaList

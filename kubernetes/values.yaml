@@ -1,7 +1,7 @@
 operator:
   pullPolicy: IfNotPresent
   replicas: 1
-  image: pannoi/kafka-schema-opereator
+  image: incubly/kafka-schema-opereator
   version: 0.2.0
 
 schemaRegistry:

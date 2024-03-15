@@ -1,5 +1,11 @@
 # Kafka Schema Operator
 
+This is a fork of [Pannoi kafka-schema-operator](https://github.com/pannoi/kafka-schema-operator).
+Kudos to author for maintaining it.
+The reason we've decided to fork the repository
+was the necessity to introduce backward-incompatible change in resource structure.
+See [this PR](https://github.com/Tomek-Adamczewski/kafka-schema-operator/pull/1) for details.
+
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kafka-schema-operator)](https://artifacthub.io/packages/search?repo=kafka-schema-operator)
 
 The Kafka Schema Operator delivers as easy way to deliver Kafka Schemas declaratively via Kubernetes `CRD`
@@ -20,7 +26,7 @@ Schema First approach should be implemented if you are using `schema-registry` a
 ## Installation
 
 ```bash
-helm repo add kafka-schema-operator https://pannoi.github.io/kafka-schema-operator-helm/
+helm repo add kafka-schema-operator https://incubly.github.io/kafka-schema-operator-helm/
 helm repo update
 helm upgrade --install kafka-schema-operator kafka-schema-operator/kafka-schema-operator --values values.yaml
 ```
@@ -49,11 +55,16 @@ schemaRegistry:
 Deploy __ConfigMap__
 
 ```yaml
-apiVersion: kafka-schema-operator.pannoi/v2beta1
+apiVersion: kafka-schema-operator.incubly/v2beta1
 kind: KafkaSchema
 metadata:
   name: kafka-schema
   namespace: default
+schemaRegistry:
+  host: ...
+  port: ...
+  key: ...
+  secret: ...
 spec:
   name: testing
   schemaSerializer: string

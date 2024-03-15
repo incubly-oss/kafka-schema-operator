@@ -37,6 +37,12 @@ type KafkaSchemaSpec struct {
 	TerminationProtection bool            `json:"terminationProtection,omitempty"`
 	Data                  KafkaSchemaData `json:"data"`
 }
+type SchemaRegistry struct {
+	Host   string `json:"host,omitempty"`
+	Port   int    `json:"port,omitempty"`
+	Key    string `json:"key,omitempty"`
+	Secret string `json:"secret,omitempty"`
+}
 
 // KafkaSchemaStatus defines the observed state of KafkaSchema
 type KafkaSchemaStatus struct {
@@ -52,8 +58,9 @@ type KafkaSchema struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KafkaSchemaSpec   `json:"spec,omitempty"`
-	Status KafkaSchemaStatus `json:"status,omitempty"`
+	SchemaRegistry SchemaRegistry    `json:"schemaRegistry,omitempty"`
+	Spec           KafkaSchemaSpec   `json:"spec,omitempty"`
+	Status         KafkaSchemaStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
