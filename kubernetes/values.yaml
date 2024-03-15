@@ -1,8 +1,8 @@
 operator:
   pullPolicy: IfNotPresent
   replicas: 1
-  image: incubly/kafka-schema-opereator
-  version: 0.2.0
+  image: tomekincubly/kafka-schema-operator
+  version: master # TODO: switch to release versions?
 
 schemaRegistry:
   host:

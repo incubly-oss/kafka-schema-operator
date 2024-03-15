@@ -32,6 +32,19 @@ spec:
             type: string
           metadata:
             type: object
+          schemaRegistry:
+            description: 'optional configuration of schema registry endpoints
+              (if specific resource should target different instance of schema registry
+              than default configured through operator env vars)'
+            properties:
+              host:
+                type: string
+              port:
+                type: integer
+              key:
+                type: string
+              secret:
+                type: string
           spec:
             description: KafkaSchemaSpec defines the desired state of KafkaSchema
             properties:
