@@ -15,70 +15,71 @@ spec:
     singular: kafkaschema
   scope: Namespaced
   versions:
-  - name: v2beta1
-    schema:
-      openAPIV3Schema:
-        description: KafkaSchema is the Schema for the kafkaschemas API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
+    - name: v2beta1
+      schema:
+        openAPIV3Schema:
+          description: KafkaSchema is the Schema for the kafkaschemas API
+          properties:
+            apiVersion:
+              description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
+              type: string
+            kind:
+              description: 'Kind is a string value representing the REST resource this
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          schemaRegistry:
-            description: 'optional configuration of schema registry endpoints
-              (if specific resource should target different instance of schema registry
-              than default configured through operator env vars)'
-            properties:
-              host:
-                type: string
-              port:
-                type: integer
-              key:
-                type: string
-              secret:
-                type: string
-          spec:
-            description: KafkaSchemaSpec defines the desired state of KafkaSchema
-            properties:
-              autoReconciliation:
-                type: boolean
-              data:
-                properties:
-                  compatibility:
-                    type: string
-                  schema:
-                    type: string
-                  format:
-                    type: string
-                required:
-                - compatibility
-                - schema
-                - format
-                type: object
-              name:
-                type: string
-              schemaSerializer:
-                type: string
-              terminationProtection:
-                type: boolean
-            required:
-            - data
-            - name
-            - schemaSerializer
-            type: object
-          status:
-            description: KafkaSchemaStatus defines the observed state of KafkaSchema
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
+              type: string
+            metadata:
+              type: object
+            schemaRegistry:
+              description: SchemaRegistry contains optional configuration of schema
+                registry endpoints (if specific resource should target different instance
+                of schema registry than default configured through operator env vars)
+              properties:
+                host:
+                  type: string
+                key:
+                  type: string
+                port:
+                  type: integer
+                secret:
+                  type: string
+              type: object
+            spec:
+              description: KafkaSchemaSpec defines the desired state of KafkaSchema
+              properties:
+                autoReconciliation:
+                  type: boolean
+                data:
+                  properties:
+                    compatibility:
+                      type: string
+                    format:
+                      type: string
+                    schema:
+                      type: string
+                  required:
+                    - compatibility
+                    - format
+                    - schema
+                  type: object
+                name:
+                  type: string
+                schemaSerializer:
+                  type: string
+                terminationProtection:
+                  type: boolean
+              required:
+                - data
+                - name
+                - schemaSerializer
+              type: object
+            status:
+              description: KafkaSchemaStatus defines the observed state of KafkaSchema
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}

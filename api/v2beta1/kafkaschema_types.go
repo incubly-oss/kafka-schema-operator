@@ -37,6 +37,8 @@ type KafkaSchemaSpec struct {
 	TerminationProtection bool            `json:"terminationProtection,omitempty"`
 	Data                  KafkaSchemaData `json:"data"`
 }
+
+// SchemaRegistry contains optional configuration of schema registry endpoints (if specific resource should target different instance of schema registry than default configured through operator env vars)
 type SchemaRegistry struct {
 	Host   string `json:"host,omitempty"`
 	Port   int    `json:"port,omitempty"`
