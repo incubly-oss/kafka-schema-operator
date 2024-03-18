@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  kafka-schema-operator:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2024-03-18T07:14:03.774191+01:00"
+    description: Operator to maintain kafka schemas via CRD
+    digest: 1131773303243b199fa8be4385847797097ce5157e52a13f382b933e64028e63
+    name: kafka-schema-operator
+    type: application
+    urls:
+    - https://tomek-adamczewski.github.io/kafka-schema-operator-0.2.0.tgz
+    version: 0.2.0
+generated: "2024-03-18T07:14:03.773796+01:00"

@@ -26,9 +26,9 @@ Schema First approach should be implemented if you are using `schema-registry` a
 ## Installation
 
 ```bash
-helm repo add kafka-schema-operator https://incubly.github.io/kafka-schema-operator-helm/
+helm repo add incubly-kafka-schema-operator https://tomek-adamczewski.github.io/kafka-schema-operator/
 helm repo update
-helm upgrade --install kafka-schema-operator kafka-schema-operator/kafka-schema-operator --values values.yaml
+helm upgrade --install incubly-kafka-schema-operator incubly-kafka-schema-operator/kafka-schema-operator --values values.yaml
 ```
 
 You need to set `SCHEMA_REGSITRY_HOST` and `SCHEMA_REGSITRY_PORT` initial functionality
