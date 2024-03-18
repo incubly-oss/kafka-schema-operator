@@ -19,9 +19,9 @@ var _ = Describe("KafkaschemaController", func() {
 	BeforeEach(func() {
 		srMock.Clear()
 	})
-	Context("When creating Schema", func() {
+	Context("When creating resource", func() {
 
-		It("Should create schema", func() {
+		It("Should register subject+schema and manage resource status", func() {
 			topicName := "testenv.testservice.testevent." + strconv.FormatInt(time.Now().UnixMilli(), 10)
 			schemaRes := v2beta1.KafkaSchema{
 				TypeMeta: metav1.TypeMeta{
@@ -57,7 +57,7 @@ var _ = Describe("KafkaschemaController", func() {
 			ctx := context.Background()
 			Expect(k8sClient.Create(ctx, &schemaRes)).Should(Succeed())
 
-			By("Then: resource is created in K8S")
+			By("Then: resource is properly created in K8S")
 			schemaLookupKey := types.NamespacedName{Name: topicName, Namespace: ResourceNs}
 			createdResource := &v2beta1.KafkaSchema{}
 			Eventually(func() error {
@@ -82,7 +82,26 @@ var _ = Describe("KafkaschemaController", func() {
 			)
 			Expect(srMock.Subjects[topicName+"-value"].SchemaRefs).Should(HaveLen(1))
 			// TODO: verify schema
-		})
 
+			By("And: resource are updated with proper status and finalizer")
+			updatedResource := &v2beta1.KafkaSchema{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, schemaLookupKey, updatedResource)
+			}).Should(Succeed())
+			Expect(updatedResource.Finalizers).Should(ConsistOf("kafka-schema-operator.incubly/finalizer"))
+			// TODO: verify status (& events?)
+		})
+	})
+	Context("When updating resource", func() {
+		PIt("Should update schema payload", func() {
+		})
+		PIt("Should update compatibility mode", func() {
+		})
+		PIt("Should fail if schema change is incompatible", func() {
+		})
+	})
+	Context("When deleting resource", func() {
+		PIt("Should soft-delete subject and cleanup resource", func() {
+		})
 	})
 })
