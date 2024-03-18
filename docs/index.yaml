@@ -9,6 +9,6 @@ entries:
     name: kafka-schema-operator
     type: application
     urls:
-    - https://tomek-adamczewski.github.io/kafka-schema-operator-0.2.0.tgz
+    - https://tomek-adamczewski.github.io/kafka-schema-operator/kafka-schema-operator-0.2.0.tgz
     version: 0.2.0
 generated: "2024-03-18T12:12:22.526015+01:00"
