@@ -28,6 +28,10 @@ type RegisterSchemaReq struct {
 	SchemaType string `json:"schemaType,omitempty"`
 }
 
+type SetCompatibilityModeReq struct {
+	Compatibility string `json:"compatibility"`
+}
+
 func (c *SrClient) RegisterSchema(subject string, req RegisterSchemaReq) error {
 	jsonReq, _ := json.Marshal(req)
 	return c.sendHttpRequest(
@@ -43,11 +47,12 @@ func (c *SrClient) DeleteSubject(subject string) error {
 		"")
 }
 
-func (c *SrClient) SetCompatibilityMode(subject string, mode string) error {
+func (c *SrClient) SetCompatibilityMode(subject string, req SetCompatibilityModeReq) error {
+	jsonReq, _ := json.Marshal(req)
 	return c.sendHttpRequest(
 		"/config/"+subject,
 		"PUT",
-		mode)
+		string(jsonReq))
 }
 
 func (c *SrClient) sendHttpRequest(url string, httpMethod string, payload string) error {

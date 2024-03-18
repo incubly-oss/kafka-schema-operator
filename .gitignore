@@ -25,9 +25,10 @@ Dockerfile.cross
 *.swo
 *~
 
-# Local 
+# Local
 .vscode/
 .env
 examples/
 packages/
 vals.yaml
+/config/crd/bases

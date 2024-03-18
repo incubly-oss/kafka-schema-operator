@@ -40,22 +40,22 @@ type KafkaSchemaReconciler struct {
 }
 
 func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	schema := &kafkaschemaoperatorv2beta1.KafkaSchema{}
 	err := r.Get(ctx, req.NamespacedName, schema)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Schema resource not found. Ignoring since object must be deleted")
+			logger.Info("Schema resource not found. Ignoring since object must be deleted")
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "Failed to get Schema resource")
+		logger.Error(err, "Failed to get Schema resource")
 		return ctrl.Result{}, err
 	}
 
-	srClient, err := schemareg.NewClient(&schema.SchemaRegistry, log)
+	srClient, err := schemareg.NewClient(&schema.SchemaRegistry, logger)
 	if err != nil {
-		log.Error(err, "Failed to instantiate Schema Registry Client")
+		logger.Error(err, "Failed to instantiate Schema Registry Client")
 		return ctrl.Result{}, err
 	}
 
@@ -75,23 +75,23 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			controllerutil.RemoveFinalizer(schema, schemaFinilizers)
 			err = r.Update(ctx, schema)
 			if err != nil {
-				log.Error(err, "Failed to delete KafkaSchema from kubernetes: "+schema.Name)
+				logger.Error(err, "Failed to delete KafkaSchema from kubernetes: "+schema.Name)
 				return ctrl.Result{}, err
 			}
-			log.Info("KafkaSchema CR was deleted: " + schema.Name)
+			logger.Info("KafkaSchema CR was deleted: " + schema.Name)
 
 			err := srClient.DeleteSubject(schemaKey)
 			if err != nil {
-				log.Error(err, "Failed to delete subject for key schema from registry: "+schemaKey)
+				logger.Error(err, "Failed to delete subject for key schema from registry: "+schemaKey)
 				return ctrl.Result{}, err
 			}
 
 			err = srClient.DeleteSubject(schemaValue)
 			if err != nil {
-				log.Error(err, "Failed to delete subject for value schema from registry: "+schemaValue)
+				logger.Error(err, "Failed to delete subject for value schema from registry: "+schemaValue)
 				return ctrl.Result{}, err
 			}
-			log.Info("Schema was removed from registry")
+			logger.Info("Schema was removed from registry")
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, nil
@@ -101,60 +101,59 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		controllerutil.AddFinalizer(schema, schemaFinilizers)
 		err = r.Update(ctx, schema)
 		if err != nil {
-			log.Info("Failed to update finalizers for CR: " + schema.Name)
+			logger.Info("Failed to update finalizers for CR: " + schema.Name)
 			return ctrl.Result{}, err
 		}
-		log.Info("Finalizers are set for CR: " + schema.Name)
+		logger.Info("Finalizers are set for CR: " + schema.Name)
 	}
 
 	err = srClient.RegisterSchema(
 		schemaKey,
 		schemareg.RegisterSchemaReq{
-			Schema: `{\"type\": \"` + schema.Spec.SchemaSerializer + `\"}`,
+			Schema: `{"type": "` + schema.Spec.SchemaSerializer + `"}`,
 		})
 	if err != nil {
-		log.Error(err, "Failed to update schema registry")
+		logger.Error(err, "Failed to update schema registry")
 		return reconcileResult, err
 	}
-	log.Info("Schema key was published: " + schemaKey)
-
-	cfgData := schema.Spec.Data.Schema
-	cfgData = strings.ReplaceAll(cfgData, "\n", "")
-	cfgData = strings.ReplaceAll(cfgData, "\t", "")
-	cfgData = strings.ReplaceAll(cfgData, " ", "")
-	cfgData = strings.ReplaceAll(cfgData, `"`, `\"`)
-	cfgData = strings.Replace(cfgData, `\"{`, `"{`, 1)
-	cfgData = strings.Replace(cfgData, `}\"`, `}"`, -1)
+	logger.Info("Schema key was published: " + schemaKey)
 
 	err = srClient.RegisterSchema(
 		schemaValue,
 		schemareg.RegisterSchemaReq{
-			Schema:     cfgData,
+			Schema:     schema.Spec.Data.Schema,
 			SchemaType: strings.ToUpper(schema.Spec.Data.Format),
 		})
 	if err != nil {
-		log.Error(err, "Failed to update schema registry")
+		logger.Error(err, "Failed to update schema registry")
 		return reconcileResult, err
 	}
 
-	var schemaCompatibilityPayload strings.Builder
-	schemaCompatibilityPayload.WriteString(`{"compatibility": "`)
-	schemaCompatibilityPayload.WriteString(schema.Spec.Data.Compatibility)
-	schemaCompatibilityPayload.WriteString(`"}`)
+	err = srClient.SetCompatibilityMode(
+		schemaValue,
+		schemareg.SetCompatibilityModeReq{
+			Compatibility: schema.Spec.Data.Compatibility,
+		},
+	)
 
-	err = srClient.SetCompatibilityMode(schemaValue, schemaCompatibilityPayload.String())
 	if err != nil {
-		log.Error(err, "Failed to update schema compatibility for value")
+		logger.Error(err, "Failed to update schema compatibility for value")
 		return reconcileResult, err
 	}
 
-	err = srClient.SetCompatibilityMode(schemaKey, schemaCompatibilityPayload.String())
+	err = srClient.SetCompatibilityMode(
+		schemaKey,
+		schemareg.SetCompatibilityModeReq{
+			Compatibility: schema.Spec.Data.Compatibility,
+		},
+	)
+
 	if err != nil {
-		log.Error(err, "Failed to update schema compatibility for key")
+		logger.Error(err, "Failed to update schema compatibility for key")
 		return reconcileResult, err
 	}
 
-	log.Info("Schema value was published: " + schemaValue)
+	logger.Info("Schema value was published: " + schemaValue)
 	return reconcileResult, nil
 }
 

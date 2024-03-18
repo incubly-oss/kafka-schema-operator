@@ -52,8 +52,6 @@ schemaRegistry:
 
 ## How to use
 
-Deploy __ConfigMap__
-
 ```yaml
 apiVersion: kafka-schema-operator.incubly/v2beta1
 kind: KafkaSchema

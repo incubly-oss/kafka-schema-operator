@@ -113,7 +113,15 @@ var _ = Describe("SrClient", func() {
 			Expect(actualReq.Header).Should(HaveKeyWithValue("Content-Type", []string{"application/vnd.schemaregistry.v1+json"}))
 		})
 		It("Should set compatibility mode", func() {
-			Expect(clientUnderTest.SetCompatibilityMode("mysubject", "BACKWARD")).Should(Succeed())
+			Expect(
+				clientUnderTest.SetCompatibilityMode(
+					"mysubject",
+					SetCompatibilityModeReq{
+						Compatibility: "BACKWARD",
+					},
+				),
+			).Should(Succeed())
+
 			Expect(collectedRequests).To(HaveLen(1))
 			actualReq := collectedRequests[0]
 			Expect(actualReq.URL.Path).Should(Equal("/config/mysubject"))
@@ -122,7 +130,14 @@ var _ = Describe("SrClient", func() {
 			Expect(actualReq.Header).Should(HaveKeyWithValue("Content-Type", []string{"application/vnd.schemaregistry.v1+json"}))
 		})
 		It("Should not send basic auth if client has no auth", func() {
-			Expect(clientUnderTest.SetCompatibilityMode("mysubject", "BACKWARD")).Should(Succeed())
+			Expect(
+				clientUnderTest.SetCompatibilityMode(
+					"mysubject",
+					SetCompatibilityModeReq{
+						Compatibility: "BACKWARD",
+					},
+				),
+			).Should(Succeed())
 			Expect(collectedRequests).To(HaveLen(1))
 			actualReq := collectedRequests[0]
 			Expect(actualReq.Header).ShouldNot(HaveKey("Authorization"))
@@ -133,7 +148,7 @@ var _ = Describe("SrClient", func() {
 				basicAuthCreds: &BasicAuthCreds{"user", "pass"},
 				logger:         log.Log,
 			}
-			Expect(clientWithBasicAuth.SetCompatibilityMode("mysubject", "BACKWARD")).Should(Succeed())
+			Expect(clientWithBasicAuth.DeleteSubject("mysubject")).Should(Succeed())
 			Expect(collectedRequests).To(HaveLen(1))
 			actualReq := collectedRequests[0]
 			Expect(actualReq.Header).Should(HaveKeyWithValue(
