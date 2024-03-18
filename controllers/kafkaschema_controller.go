@@ -18,26 +18,20 @@ package controllers
 
 import (
 	"context"
-	er "errors"
-	"io"
-	"net/http"
-	"os"
-	"strconv"
+	"kafka-schema-operator/schemareg"
 	"strings"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	kafkaschemaoperatorv1beta1 "kafka-schema-operator/api/v1beta1"
+	kafkaschemaoperatorv2beta1 "kafka-schema-operator/api/v2beta1"
 )
 
-const schemaFinilizers = "kafka-schema-operator.pannoi/finalizer"
+const schemaFinilizers = "kafka-schema-operator.incubly/finalizer"
 
 // KafkaSchemaReconciler reconciles a KafkaSchema object
 type KafkaSchemaReconciler struct {
@@ -45,99 +39,23 @@ type KafkaSchemaReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-func generateSchemaUrl(subject string) (string, error) {
-	schemaRegistryHost := os.Getenv("SCHEMA_REGISTRY_HOST")
-	schemaRegistryPort := os.Getenv("SCHEMA_REGISTRY_PORT")
-	if len(schemaRegistryHost) == 0 || len(schemaRegistryPort) == 0 {
-		return "", er.New("schema registry or port is not set")
-	}
-	var url strings.Builder
-	url.WriteString("http://")
-	url.WriteString(schemaRegistryHost)
-	url.WriteString(":")
-	url.WriteString(schemaRegistryPort)
-	url.WriteString("/subjects/")
-	url.WriteString(subject)
-	url.WriteString("/versions")
-	return url.String(), nil
-}
-
-func generateSchemaCompatibilityUrl(subject string) (string, error) {
-	schemaRegistryHost := os.Getenv("SCHEMA_REGISTRY_HOST")
-	schemaRegistryPort := os.Getenv("SCHEMA_REGISTRY_PORT")
-	if len(schemaRegistryHost) == 0 || len(schemaRegistryPort) == 0 {
-		return "", er.New("schema registry or port is not set")
-	}
-	var url strings.Builder
-	url.WriteString("http://")
-	url.WriteString(schemaRegistryHost)
-	url.WriteString(":")
-	url.WriteString(schemaRegistryPort)
-	url.WriteString("/config/")
-	url.WriteString(subject)
-
-	return url.String(), nil
-}
-
-func generateSchemaDeletionUrl(subject string) (string, error) {
-	schemaRegistryHost := os.Getenv("SCHEMA_REGISTRY_HOST")
-	schemaRegistryPort := os.Getenv("SCHEMA_REGISTRY_PORT")
-	if len(schemaRegistryHost) == 0 || len(schemaRegistryPort) == 0 {
-		return "", er.New("schema registry or port is not set")
-	}
-	var url strings.Builder
-	url.WriteString("http://")
-	url.WriteString(schemaRegistryHost)
-	url.WriteString(":")
-	url.WriteString(schemaRegistryPort)
-	url.WriteString("/subjects/")
-	url.WriteString(subject)
-
-	return url.String(), nil
-}
-
-func sendHttpRequest(ctx context.Context, url string, httpMethod string, payload string) error {
-	log := log.FromContext(ctx)
-	var httpReq *http.Request
-	if len(payload) == 0 {
-		httpReq, _ = http.NewRequest(httpMethod, url, nil)
-	} else {
-		httpReq, _ = http.NewRequest(httpMethod, url, strings.NewReader(payload))
-	}
-	httpReq.Header.Set("Content-Type", "application/vnd.schemaregistry.v1+json")
-	if len(os.Getenv("SCHEMA_REGISTRY_KEY")) > 0 || len(os.Getenv("SCHEMA_REGISTRY_SECRET")) > 0 {
-		httpReq.SetBasicAuth(os.Getenv("SCHEMA_REGISTRY_KEY"), os.Getenv("SCHEMA_REGISTRY_SECRET"))
-	}
-	httpResp, err := http.DefaultClient.Do(httpReq)
-	if err != nil {
-		log.Error(err, "Failed to send schema payload to schema-registry")
-		return err
-	}
-	defer httpResp.Body.Close()
-	if httpResp.StatusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(httpResp.Body)
-		if err != nil {
-			log.Error(err, "Cannot read http response body")
-		}
-		log.Info("Failed to update schema registry")
-		log.Info("Statuscode: " + strconv.Itoa(httpResp.StatusCode))
-		log.Info("Body response: " + string(bodyBytes))
-		return er.New("Failed to update schema registry: " + string(bodyBytes))
-	}
-	return nil
-}
-
 func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
-	schema := &kafkaschemaoperatorv1beta1.KafkaSchema{}
+	schema := &kafkaschemaoperatorv2beta1.KafkaSchema{}
 	err := r.Get(ctx, req.NamespacedName, schema)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Schema resource not found. Ignoring since object must be deleted")
+			logger.Info("Schema resource not found. Ignoring since object must be deleted")
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "Failed to get Schema resource")
+		logger.Error(err, "Failed to get Schema resource")
+		return ctrl.Result{}, err
+	}
+
+	srClient, err := schemareg.NewClient(&schema.SchemaRegistry, logger)
+	if err != nil {
+		logger.Error(err, "Failed to instantiate Schema Registry Client")
 		return ctrl.Result{}, err
 	}
 
@@ -146,13 +64,6 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		reconcileResult = ctrl.Result{Requeue: true}
 	} else {
 		reconcileResult = ctrl.Result{}
-	}
-
-	cfg := &corev1.ConfigMap{}
-	err = r.Get(ctx, types.NamespacedName{Name: schema.Spec.Data.ConfigRef, Namespace: schema.Namespace}, cfg)
-	if err != nil {
-		log.Error(err, "Failed to find ConfigMap: "+schema.Spec.Data.ConfigRef)
-		return reconcileResult, err
 	}
 
 	schemaKey := schema.Spec.Name + "-key"
@@ -164,37 +75,23 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			controllerutil.RemoveFinalizer(schema, schemaFinilizers)
 			err = r.Update(ctx, schema)
 			if err != nil {
-				log.Error(err, "Failed to delete KafkaSchema from kubernetes: "+schema.Name)
+				logger.Error(err, "Failed to delete KafkaSchema from kubernetes: "+schema.Name)
 				return ctrl.Result{}, err
 			}
-			log.Info("KafkaSchema CR was deleted: " + schema.Name)
-			err = r.Delete(ctx, cfg)
+			logger.Info("KafkaSchema CR was deleted: " + schema.Name)
+
+			err := srClient.DeleteSubject(schemaKey)
 			if err != nil {
-				log.Error(err, "Failed to delete ConfigMap: "+schema.Spec.Data.ConfigRef)
+				logger.Error(err, "Failed to delete subject for key schema from registry: "+schemaKey)
 				return ctrl.Result{}, err
 			}
-			log.Info("ConfigMap was deleted: " + schema.Spec.Data.ConfigRef)
-			keyDeletionUrl, err := generateSchemaDeletionUrl(schemaKey)
+
+			err = srClient.DeleteSubject(schemaValue)
 			if err != nil {
-				log.Error(err, "Cannot create deletion url")
+				logger.Error(err, "Failed to delete subject for value schema from registry: "+schemaValue)
 				return ctrl.Result{}, err
 			}
-			valueDeletionUrl, err := generateSchemaDeletionUrl(schemaValue)
-			if err != nil {
-				log.Error(err, "Cannot create deletion url")
-				return ctrl.Result{}, err
-			}
-			err = sendHttpRequest(ctx, keyDeletionUrl, "DELETE", "")
-			if err != nil {
-				log.Error(err, "Failed to delete schema key from registry: "+schemaKey)
-				return ctrl.Result{}, err
-			}
-			err = sendHttpRequest(ctx, valueDeletionUrl, "DELETE", "")
-			if err != nil {
-				log.Error(err, "Failed to delete schema value from registry: "+schemaValue)
-				return ctrl.Result{}, err
-			}
-			log.Info("Schema was removed from registry")
+			logger.Info("Schema was removed from registry")
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, nil
@@ -204,94 +101,65 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		controllerutil.AddFinalizer(schema, schemaFinilizers)
 		err = r.Update(ctx, schema)
 		if err != nil {
-			log.Info("Failed to update finilizers for CR: " + schema.Name)
+			logger.Info("Failed to update finalizers for CR: " + schema.Name)
 			return ctrl.Result{}, err
 		}
-		log.Info("Finilizers are set for CR: " + schema.Name)
+		logger.Info("Finalizers are set for CR: " + schema.Name)
 	}
 
-	keySchemaRegistryUrl, err := generateSchemaUrl(schemaKey)
+	err = srClient.RegisterSchema(
+		schemaKey,
+		schemareg.RegisterSchemaReq{
+			Schema: `{"type": "` + schema.Spec.SchemaSerializer + `"}`,
+		})
 	if err != nil {
-		log.Error(err, "Cannot create registry url")
+		logger.Error(err, "Failed to update schema registry")
+		return reconcileResult, err
+	}
+	logger.Info("Schema key was published: " + schemaKey)
+
+	err = srClient.RegisterSchema(
+		schemaValue,
+		schemareg.RegisterSchemaReq{
+			Schema:     schema.Spec.Data.Schema,
+			SchemaType: strings.ToUpper(schema.Spec.Data.Format),
+		})
+	if err != nil {
+		logger.Error(err, "Failed to update schema registry")
 		return reconcileResult, err
 	}
 
-	valueSchemaRegistryUrl, err := generateSchemaUrl(schemaValue)
+	err = srClient.SetCompatibilityMode(
+		schemaValue,
+		schemareg.SetCompatibilityModeReq{
+			Compatibility: schema.Spec.Data.Compatibility,
+		},
+	)
+
 	if err != nil {
-		log.Error(err, "Cannot create registry url")
+		logger.Error(err, "Failed to update schema compatibility for value")
 		return reconcileResult, err
 	}
 
-	valueSchemaCompatibilityUrl, err := generateSchemaCompatibilityUrl(schemaValue)
+	err = srClient.SetCompatibilityMode(
+		schemaKey,
+		schemareg.SetCompatibilityModeReq{
+			Compatibility: schema.Spec.Data.Compatibility,
+		},
+	)
+
 	if err != nil {
-		log.Error(err, "Cannot create schema compatibility url")
+		logger.Error(err, "Failed to update schema compatibility for key")
 		return reconcileResult, err
 	}
 
-	keySchemaCompatibilityUrl, err := generateSchemaCompatibilityUrl(schemaKey)
-	if err != nil {
-		log.Error(err, "Cannot create schema compatibility url")
-		return reconcileResult, err
-	}
-
-	var schemaKeyPayload strings.Builder
-	schemaKeyPayload.WriteString(`{"schema": "{\"type\": \"`)
-	schemaKeyPayload.WriteString(schema.Spec.SchemaSerializer)
-	schemaKeyPayload.WriteString(`\"}"}`)
-
-	err = sendHttpRequest(ctx, keySchemaRegistryUrl, "POST", schemaKeyPayload.String())
-	if err != nil {
-		log.Error(err, "Failed to update schema registry")
-		return reconcileResult, err
-	}
-	log.Info("Schema key was published: " + schemaKey)
-
-	cfgData := cfg.Data["schema"]
-	cfgData = strings.ReplaceAll(cfgData, "\n", "")
-	cfgData = strings.ReplaceAll(cfgData, "\t", "")
-	cfgData = strings.ReplaceAll(cfgData, " ", "")
-	cfgData = strings.ReplaceAll(cfgData, `"`, `\"`)
-	cfgData = strings.Replace(cfgData, `\"{`, `"{`, 1)
-	cfgData = strings.Replace(cfgData, `}\"`, `}"`, -1)
-
-	var schemaValuePayload strings.Builder
-	schemaValuePayload.WriteString(`{"schema": "`)
-	schemaValuePayload.WriteString(cfgData)
-	schemaValuePayload.WriteString(`",`)
-	schemaValuePayload.WriteString(`"schemaType": "`)
-	schemaValuePayload.WriteString(strings.ToUpper(schema.Spec.Data.Format))
-	schemaValuePayload.WriteString(`"}`)
-
-	err = sendHttpRequest(ctx, valueSchemaRegistryUrl, "POST", schemaValuePayload.String())
-	if err != nil {
-		log.Error(err, "Failed to update schema registry")
-		return reconcileResult, err
-	}
-
-	var schemaCompatibilityPayload strings.Builder
-	schemaCompatibilityPayload.WriteString(`{"compatibility": "`)
-	schemaCompatibilityPayload.WriteString(schema.Spec.Data.Compatibility)
-	schemaCompatibilityPayload.WriteString(`"}`)
-
-	err = sendHttpRequest(ctx, valueSchemaCompatibilityUrl, "PUT", schemaCompatibilityPayload.String())
-	if err != nil {
-		log.Error(err, "Failed to update schema compatibility for value")
-		return reconcileResult, err
-	}
-
-	err = sendHttpRequest(ctx, keySchemaCompatibilityUrl, "PUT", schemaCompatibilityPayload.String())
-	if err != nil {
-		log.Error(err, "Failed to update schema compatibility for key")
-		return reconcileResult, err
-	}
-
-	log.Info("Schema value was published: " + schemaValue)
+	logger.Info("Schema value was published: " + schemaValue)
 	return reconcileResult, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *KafkaSchemaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kafkaschemaoperatorv1beta1.KafkaSchema{}).
+		For(&kafkaschemaoperatorv2beta1.KafkaSchema{}).
 		Complete(r)
 }

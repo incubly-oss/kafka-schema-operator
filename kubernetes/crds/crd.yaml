@@ -5,9 +5,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.10.0
   creationTimestamp: null
-  name: kafkaschemas.kafka-schema-operator.pannoi
+  name: kafkaschemas.kafka-schema-operator.incubly
 spec:
-  group: kafka-schema-operator.pannoi
+  group: kafka-schema-operator.incubly
   names:
     kind: KafkaSchema
     listKind: KafkaSchemaList
@@ -15,7 +15,7 @@ spec:
     singular: kafkaschema
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - name: v2beta1
     schema:
       openAPIV3Schema:
         description: KafkaSchema is the Schema for the kafkaschemas API
@@ -32,6 +32,19 @@ spec:
             type: string
           metadata:
             type: object
+          schemaRegistry:
+            description: 'optional configuration of schema registry endpoints
+              (if specific resource should target different instance of schema registry
+              than default configured through operator env vars)'
+            properties:
+              host:
+                type: string
+              port:
+                type: integer
+              key:
+                type: string
+              secret:
+                type: string
           spec:
             description: KafkaSchemaSpec defines the desired state of KafkaSchema
             properties:
@@ -41,13 +54,13 @@ spec:
                 properties:
                   compatibility:
                     type: string
-                  configRef:
+                  schema:
                     type: string
                   format:
                     type: string
                 required:
                 - compatibility
-                - configRef
+                - schema
                 - format
                 type: object
               name:

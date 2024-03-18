@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v2beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +24,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 type KafkaSchemaData struct {
-	ConfigRef     string `json:"configRef"`     // Reference to configmap with values
+	Schema        string `json:"schema"`        // schema blob (string with avro/json/protobuf schema)
 	Format        string `json:"format"`        // avro/json/protobuf <-> schemeType:
 	Compatibility string `json:"compatibility"` // BACKWARD | BACKWARD_TRANSITIVE | FORWARD | FORWARD_TRANSITIVE | FULL | FULL_TRANSITIVE | NONE
 }
@@ -36,6 +36,12 @@ type KafkaSchemaSpec struct {
 	AutoReconciliation    bool            `json:"autoReconciliation,omitempty"`
 	TerminationProtection bool            `json:"terminationProtection,omitempty"`
 	Data                  KafkaSchemaData `json:"data"`
+}
+type SchemaRegistry struct {
+	Host   string `json:"host,omitempty"`
+	Port   int    `json:"port,omitempty"`
+	Key    string `json:"key,omitempty"`
+	Secret string `json:"secret,omitempty"`
 }
 
 // KafkaSchemaStatus defines the observed state of KafkaSchema
@@ -52,8 +58,9 @@ type KafkaSchema struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KafkaSchemaSpec   `json:"spec,omitempty"`
-	Status KafkaSchemaStatus `json:"status,omitempty"`
+	SchemaRegistry SchemaRegistry    `json:"schemaRegistry,omitempty"`
+	Spec           KafkaSchemaSpec   `json:"spec,omitempty"`
+	Status         KafkaSchemaStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
