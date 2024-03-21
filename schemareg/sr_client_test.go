@@ -29,20 +29,19 @@ var _ = Describe("SrClient", func() {
 			client, err := NewClient(&v2beta1.SchemaRegistry{
 				Host: "my.host",
 				Port: 1234,
-			}, log.Log)
+			}, "", log.Log)
 			Expect(err).Should(Succeed())
 			Expect(client.baseUrl).Should(Equal("http://my.host:1234"))
 		})
 		It("Should fall back to default baseUrl", func() {
-			client, err := NewClient(nil, log.Log)
+			client, err := NewClient(nil, "", log.Log)
 			Expect(err).Should(Succeed())
 			Expect(client.baseUrl).Should(Equal("http://default.host:6666"))
 		})
 		It("Should use provided basic auth credentials", func() {
 			client, err := NewClient(&v2beta1.SchemaRegistry{
-				Key:    "myKey",
-				Secret: "mySecret",
-			}, log.Log)
+				User: "myKey",
+			}, "mySecret", log.Log)
 			Expect(err).Should(Succeed())
 			Expect(client.basicAuthCreds.user).Should(Equal("myKey"))
 			Expect(client.basicAuthCreds.pass).Should(Equal("mySecret"))
@@ -50,14 +49,14 @@ var _ = Describe("SrClient", func() {
 		It("Should fall back to default basic auth credentials", func() {
 			os.Setenv("SCHEMA_REGISTRY_KEY", "defaultKey")
 			os.Setenv("SCHEMA_REGISTRY_SECRET", "defaultSecret")
-			client, err := NewClient(nil, log.Log)
+			client, err := NewClient(nil, "", log.Log)
 			Expect(err).Should(Succeed())
 			Expect(client.basicAuthCreds.user).Should(Equal("defaultKey"))
 			Expect(client.basicAuthCreds.pass).Should(Equal("defaultSecret"))
 
 		})
 		It("Should work without basic auth credentials", func() {
-			client, err := NewClient(nil, log.Log)
+			client, err := NewClient(nil, "", log.Log)
 			Expect(err).Should(Succeed())
 			Expect(client.basicAuthCreds).To(BeNil())
 		})

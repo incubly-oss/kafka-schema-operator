@@ -40,10 +40,11 @@ type KafkaSchemaSpec struct {
 
 // SchemaRegistry contains optional configuration of schema registry endpoints (if specific resource should target different instance of schema registry than default configured through operator env vars)
 type SchemaRegistry struct {
-	Host   string `json:"host,omitempty"`
-	Port   int    `json:"port,omitempty"`
-	Key    string `json:"key,omitempty"`
-	Secret string `json:"secret,omitempty"`
+	Host           string `json:"host,omitempty"`
+	Port           int    `json:"port,omitempty"`
+	User           string `json:"user,omitempty"`
+	PasswordSecret string `json:"passwordSecret,omitempty"`
+	SecretKey      string `json:"secretKey,omitempty"`
 }
 
 // KafkaSchemaStatus defines the observed state of KafkaSchema

@@ -99,14 +99,14 @@ func (c *SrClient) sendHttpRequest(url string, httpMethod string, payload string
 	return nil
 }
 
-func NewClient(schemaReg *kafkaschemaoperatorv2beta1.SchemaRegistry, logger logr.Logger) (*SrClient, error) {
+func NewClient(schemaReg *kafkaschemaoperatorv2beta1.SchemaRegistry, maybePassword string, logger logr.Logger) (*SrClient, error) {
 	baseUrl, err := resolveBaseUrl(schemaReg)
 	if err != nil {
 		logger.Error(err, "Failed to resolve base url for schema registry")
 		return nil, err
 	}
 
-	basicAuthCreds := resolveBasicAuthCreds(schemaReg)
+	basicAuthCreds := resolveBasicAuthCreds(schemaReg, maybePassword)
 
 	client := &SrClient{
 		baseUrl:        baseUrl,
@@ -139,11 +139,11 @@ func resolveBaseUrl(schemaReg *kafkaschemaoperatorv2beta1.SchemaRegistry) (strin
 	return baseUrl, nil
 }
 
-func resolveBasicAuthCreds(reg *kafkaschemaoperatorv2beta1.SchemaRegistry) *BasicAuthCreds {
-	if reg != nil && len(reg.Key) > 0 && len(reg.Secret) > 0 {
+func resolveBasicAuthCreds(reg *kafkaschemaoperatorv2beta1.SchemaRegistry, password string) *BasicAuthCreds {
+	if reg != nil && len(reg.User) > 0 && len(password) > 0 {
 		return &BasicAuthCreds{
-			user: reg.Key,
-			pass: reg.Secret,
+			user: reg.User,
+			pass: password,
 		}
 	} else if len(os.Getenv("SCHEMA_REGISTRY_KEY")) > 0 && len(os.Getenv("SCHEMA_REGISTRY_SECRET")) > 0 {
 		return &BasicAuthCreds{

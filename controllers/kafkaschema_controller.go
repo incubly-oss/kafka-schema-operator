@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"kafka-schema-operator/schemareg"
 	"strings"
 
@@ -53,7 +55,19 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	srClient, err := schemareg.NewClient(&schema.SchemaRegistry, logger)
+	var maybePassword string
+	secretName := schema.SchemaRegistry.PasswordSecret
+	if len(secretName) > 0 {
+		secret := &v1.Secret{}
+		err := r.Get(ctx, types.NamespacedName{Name: secretName, Namespace: schema.Namespace}, secret)
+		if err != nil {
+			logger.Error(err, "Failed to get Secret with schema registry password "+secretName)
+			return ctrl.Result{}, err
+		}
+		maybePassword = string(secret.Data[schema.SchemaRegistry.SecretKey])
+	}
+
+	srClient, err := schemareg.NewClient(&schema.SchemaRegistry, maybePassword, logger)
 	if err != nil {
 		logger.Error(err, "Failed to instantiate Schema Registry Client")
 		return ctrl.Result{}, err

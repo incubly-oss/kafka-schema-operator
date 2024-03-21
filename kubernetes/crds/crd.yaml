@@ -39,11 +39,13 @@ spec:
               properties:
                 host:
                   type: string
-                key:
+                passwordSecret:
                   type: string
                 port:
                   type: integer
-                secret:
+                secretKey:
+                  type: string
+                user:
                   type: string
               type: object
             spec:
