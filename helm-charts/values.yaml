@@ -3,6 +3,13 @@ operator:
   replicas: 1
   image: tomekincubly/kafka-schema-operator
   version: master # TODO: switch to release versions?
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 5m
+      memory: 64Mi
 
 schemaRegistry:
 #  base URL of the "default" schema registry instance. Overridable on resource level

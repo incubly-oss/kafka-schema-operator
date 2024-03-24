@@ -36,16 +36,5 @@ spec:
               containerPort: 65532
               protocol: TCP
           resources:
-            limits:
-              cpu: 500m
-              memory: 128Mi
-            requests:
-              cpu: 5m
-              memory: 64Mi
-      securityContext:
-        allowPrivilegeEscalation: false
-        runAsNonRoot: true
-        capabilities:
-          drop:
-            - ALL
+{{ .Values.operator.resources | toYaml | indent 12 }}
       terminationGracePeriodSeconds: 10
