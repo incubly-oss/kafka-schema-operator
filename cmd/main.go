@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"incubly.github.io/kafka-schema-operator/api/v1beta1"
-	"incubly.github.io/kafka-schema-operator/internal/controller"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
+	"incubly.oss/kafka-schema-operator/internal/controller"
 
 	"go.uber.org/zap/zapcore"
 
@@ -92,7 +92,7 @@ func main() {
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "9af43671.incubly.com",
+		LeaderElectionID:       "9af43671.incubly.oss",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly

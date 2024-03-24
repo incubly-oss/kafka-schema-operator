@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"incubly.github.io/kafka-schema-operator/api/v1beta1"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/util/json"

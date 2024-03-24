@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"incubly.github.io/kafka-schema-operator/api/v1beta1"
-	"incubly.github.io/kafka-schema-operator/internal/schemareg"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
+	"incubly.oss/kafka-schema-operator/internal/schemareg"
 
 	"github.com/go-logr/logr"
 	. "github.com/onsi/gomega"

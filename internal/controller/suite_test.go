@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"testing"
 
-	"incubly.github.io/kafka-schema-operator/api/v1beta1"
-	schemaregmock "incubly.github.io/kafka-schema-operator/internal/schemareg-mock"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
+	schemaregmock "incubly.oss/kafka-schema-operator/internal/schemareg-mock"
 
 	"github.com/onsi/gomega/ghttp"
 	ctrl "sigs.k8s.io/controller-runtime"

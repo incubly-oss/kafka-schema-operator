@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"incubly.github.io/kafka-schema-operator/api/v1beta1"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
 )
 
 func resolveSubjectName(spec *v1beta1.KafkaSchemaSpec) (string, error) {

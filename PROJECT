@@ -2,19 +2,19 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: incubly.com
+domain: incubly.oss
 layout:
 - go.kubebuilder.io/v4
 projectName: kafka-schema-operator
-repo: incubly.github.io/kafka-schema-operator
+repo: incubly-oss.github.io/kafka-schema-operator
 resources:
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: incubly.com
+  domain: incubly.oss
   group: kafka
   kind: KafkaSchema
-  path: incubly.github.io/kafka-schema-operator/api/v1beta1
+  path: incubly.oss/kafka-schema-operator/api/v1beta1
   version: v1beta1
 version: "3"

@@ -1,4 +1,4 @@
-module incubly.github.io/kafka-schema-operator
+module incubly.oss/kafka-schema-operator
 
 go 1.21
 

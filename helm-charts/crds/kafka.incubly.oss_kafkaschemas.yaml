@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.14.0
-  name: kafkaschemas.kafka.incubly.com
+  name: kafkaschemas.kafka.incubly.oss
 spec:
-  group: kafka.incubly.com
+  group: kafka.incubly.oss
   names:
     kind: KafkaSchema
     listKind: KafkaSchemaList
@@ -143,7 +143,9 @@ spec:
               conditions:
                 description: |-
                   Represents observations of the current state of KafkaSchema.
-                  "Available", "Progressing", and "Degraded"
+                  Operator uses single condition with type="Ready" and statuses:
+                  True (reconciliation complete), False (reconciliation failed)
+                  and Unknown (reconciliation in progress).
                 items:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource.\n---\nThis struct is intended for

@@ -1,7 +1,4 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
-name: Go
+name: Build and release
 
 on:
   push:
@@ -16,28 +13,39 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Go
+    - name: Setup Go
       uses: actions/setup-go@v4
       with:
         go-version: '1.21'
 
-    - name: Build
-      run: make build
+    - name: Generate
+      run: |
+        make manifests
+        cp config/crd/bases/* helm-charts/crds/
+        make generate
+
+    - name: Lint
+      run: make lint
 
     - name: Test
       run: make test
+
+    - name: Build
+      run: make build
 
     - name: Log in to Docker Hub
       uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Extract metadata (tags, labels) for Docker
+
+    - name: Extract Docker metadata
       id: meta
       uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
       with:
         images: tomekincubly/kafka-schema-operator
-    - name: Build and push Docker image
+
+    - name: Build and push Docker
       uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
       with:
         context: .
@@ -45,3 +53,15 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+
+    - name: Install Helm
+      uses: azure/setup-helm@v3
+
+    - name: Package and release Helm Chart
+      uses: helm/chart-releaser-action@v1.6.0
+      with:
+        charts_dir: "./helm-charts"
+        packages_with_index: true
+        pages_branch: "gh-pages"
+      env:
+        CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

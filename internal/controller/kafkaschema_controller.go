@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"incubly.github.io/kafka-schema-operator/api/v1beta1"
-	"incubly.github.io/kafka-schema-operator/internal/schemareg"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
+	"incubly.oss/kafka-schema-operator/internal/schemareg"
 
 	"github.com/go-logr/logr"
 
@@ -26,11 +26,11 @@ type KafkaSchemaReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=kafka.incubly.com,resources=kafkaschemas,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kafka.incubly.com,resources=kafkaschemas/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=kafka.incubly.com,resources=kafkaschemas/finalizers,verbs=update
+//+kubebuilder:rbac:groups=kafka.incubly.oss,resources=kafkaschemas,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kafka.incubly.oss,resources=kafkaschemas/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kafka.incubly.oss,resources=kafkaschemas/finalizers,verbs=update
 
-const finalizer = "kafka.incubly.com/finalizer"
+const finalizer = "kafka.incubly.oss/finalizer"
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

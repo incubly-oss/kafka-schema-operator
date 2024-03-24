@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"time"
 
-	"incubly.github.io/kafka-schema-operator/test/utils"
+	"incubly.oss/kafka-schema-operator/test/utils"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

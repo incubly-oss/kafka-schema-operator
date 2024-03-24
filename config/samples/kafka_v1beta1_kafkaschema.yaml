@@ -1,4 +1,4 @@
-apiVersion: kafka.incubly.com/v1beta1
+apiVersion: kafka.incubly.oss/v1beta1
 kind: KafkaSchema
 metadata:
   labels:

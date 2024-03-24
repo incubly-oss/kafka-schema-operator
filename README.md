@@ -22,7 +22,7 @@ Operator is responsible for managing state of the KafkaSchema resource.
 Basic resource structure:
 
 ```yaml
-apiVersion: kafka.incubly.com/v1beta1
+apiVersion: kafka.incubly.oss/v1beta1
 kind: KafkaSchema
 metadata:
   name: my-schema
@@ -111,7 +111,7 @@ More details: [Confluent documentation](https://docs.confluent.io/platform/curre
 Operator maintains resource status will useful information about synchronization state
 of the resource, as well as single condition of type `"Ready"`.
 
-More details: [CRD (status)](./helm-charts/crds/kafka.incubly.com_kafkaschemas.yaml).
+More details: [CRD (status)](./helm-charts/crds/kafka.incubly.oss_kafkaschemas.yaml).
 
 ## Getting Started
 
@@ -119,7 +119,7 @@ You can install the operator using Helm:
 
 ```shell
 helm repo update
-helm repo add kafka-schema-operator https://incubly.github.io/kafka-schema-operator/
+helm repo add kafka-schema-operator https://incubly-oss.github.io/kafka-schema-operator/
 helm upgrade --install kafka-schema-operator kafka-schema-operator/kafka-schema-operator --values values.yaml
 ```
 

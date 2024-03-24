@@ -3,8 +3,8 @@ package controller
 import (
 	"os"
 
-	"incubly.github.io/kafka-schema-operator/api/v1beta1"
-	"incubly.github.io/kafka-schema-operator/internal/schemareg"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
+	"incubly.oss/kafka-schema-operator/internal/schemareg"
 )
 
 func performCleanup(resource *v1beta1.KafkaSchema, srClient *schemareg.SrClient) error {

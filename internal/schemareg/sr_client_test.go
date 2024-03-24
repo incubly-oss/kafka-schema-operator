@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"incubly.github.io/kafka-schema-operator/api/v1beta1"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
