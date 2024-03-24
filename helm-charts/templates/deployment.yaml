@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kubernetes.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.operator.replicas }}
+  selector:
+    matchLabels:
+      {{- include "kubernetes.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "kubernetes.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: "{{ .Release.Name }}-service-account"
+      containers:
+        - name: {{ .Release.Name}}
+          image: "{{ .Values.operator.image }}:{{ .Values.operator.version }}"
+          imagePullPolicy: {{ .Values.operator.pullPolicy }}
+          env:
+            - name: SCHEMA_REGISTRY_BASE_URL
+              value: "{{ .Values.schemaRegistry.baseUrl }}"
+            - name: DEFAULT_CLEANUP_POLICY
+              value: "{{ .Values.defaultCleanupPolicy }}"
+{{/*            - name: SCHEMA_REGISTRY_KEY*/}}
+{{/*              value: {{ .Values.schemaRegistry.apiKey }}*/}}
+{{/*            - name: SCHEMA_REGISTRY_SECRET*/}}
+{{/*              value: {{ .Values.schemaRegistry.apiSecret }}*/}}
+          ports:
+            - name: http
+              containerPort: 65532
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 5m
+              memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        capabilities:
+          drop:
+            - ALL
+      terminationGracePeriodSeconds: 10

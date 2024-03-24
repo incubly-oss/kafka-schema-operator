@@ -1,0 +1,27 @@
+# permissions for end users to view kafkaschemas.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: kafkaschema-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: kafka-schema-operator
+    app.kubernetes.io/part-of: kafka-schema-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: kafkaschema-viewer-role
+rules:
+- apiGroups:
+  - kafka.incubly.com
+  resources:
+  - kafkaschemas
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kafka.incubly.com
+  resources:
+  - kafkaschemas/status
+  verbs:
+  - get
