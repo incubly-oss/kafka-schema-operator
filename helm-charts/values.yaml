@@ -10,3 +10,13 @@ schemaRegistry:
 
 # global cleanup policy for the operator, Overridable on resource level
 defaultCleanupPolicy: DISABLED
+
+# reconciliation loop requeue delay. Defaults to 1m (60s).
+# Format: a possibly signed sequence of decimal numbers,
+# each with optional fraction and a unit suffix,
+# such as "300ms", "-1.5h" or "2h45m".
+# Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+#
+# Negative value - don't requeue (disable reconciliation loop)
+# Zero - requeue with exponential backoff
+requeueDelay: 1m

@@ -25,6 +25,8 @@ spec:
               value: "{{ .Values.schemaRegistry.baseUrl }}"
             - name: DEFAULT_CLEANUP_POLICY
               value: "{{ .Values.defaultCleanupPolicy }}"
+            - name: REQUEUE_DELAY
+              value: {{ .Values.requeueDelay }}
 {{/*            - name: SCHEMA_REGISTRY_KEY*/}}
 {{/*              value: {{ .Values.schemaRegistry.apiKey }}*/}}
 {{/*            - name: SCHEMA_REGISTRY_SECRET*/}}

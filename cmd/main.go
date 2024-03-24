@@ -111,7 +111,7 @@ func main() {
 	}
 
 	if err = (&controller.KafkaSchemaReconciler{
-		RequeueDelay: 1 * time.Minute,
+		RequeueDelay: requeueDelay(),
 		Client:       mgr.GetClient(),
 		Scheme:       mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
@@ -133,5 +133,20 @@ func main() {
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
+	}
+}
+
+func requeueDelay() time.Duration {
+	delayString := os.Getenv("REQUEUE_DELAY")
+	if len(delayString) == 0 {
+		setupLog.Info("Using default requeue delay=1m (60 seconds)")
+		return 1 * time.Minute
+	} else {
+		duration, err := time.ParseDuration(delayString)
+		if err != nil {
+			setupLog.Error(err, "unable to parse REQUEUE_DELAY as time.Duration "+delayString)
+			os.Exit(1)
+		}
+		return duration
 	}
 }
