@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Chart.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubernetes.labels" . | nindent 4 }}
