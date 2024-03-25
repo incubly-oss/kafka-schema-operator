@@ -2,13 +2,15 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"net/url"
+	"os"
 	"strconv"
 	"time"
 
-	"incubly.oss/kafka-schema-operator/api/v1beta1"
-	"incubly.oss/kafka-schema-operator/internal/schemareg"
-
 	"github.com/go-logr/logr"
+	"github.com/riferrei/srclient"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -73,7 +75,8 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	spec := res.Spec
 
-	srClient, err := schemareg.NewClient(&spec.SchemaRegistry, logger)
+	srBaseUrl, err := extractSchemaRegistryUrl(spec.SchemaRegistry)
+	srClient := srclient.CreateSchemaRegistryClient(srBaseUrl.String())
 
 	if err != nil {
 		return r.logError(
@@ -97,7 +100,7 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if res.GetDeletionTimestamp().IsZero() {
-		res.Status.SchemaRegistryUrl = srClient.BaseUrl.String()
+		res.Status.SchemaRegistryUrl = srBaseUrl.String()
 		res.Status.Subject = subjectName
 		err := r.Status().Update(ctx, res)
 		if err != nil {
@@ -110,11 +113,19 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 }
 
-func (r *KafkaSchemaReconciler) reconcileResource(
-	ctx context.Context,
-	res *v1beta1.KafkaSchema,
-	srClient *schemareg.SrClient,
-	logger logr.Logger) (ctrl.Result, error) {
+func extractSchemaRegistryUrl(registry v1beta1.SchemaRegistry) (*url.URL, error) {
+	if len(registry.BaseUrl) > 0 {
+		return url.Parse(registry.BaseUrl)
+	}
+	defaultBaseUrl := os.Getenv("SCHEMA_REGISTRY_BASE_URL")
+	if len(defaultBaseUrl) > 0 {
+		return url.Parse(defaultBaseUrl)
+	} else {
+		return nil, fmt.Errorf("base URL for schema registry not set")
+	}
+}
+
+func (r *KafkaSchemaReconciler) reconcileResource(ctx context.Context, res *v1beta1.KafkaSchema, srClient *srclient.SchemaRegistryClient, logger logr.Logger) (ctrl.Result, error) {
 
 	subjectName := res.Status.Subject
 	spec := res.Spec
@@ -132,31 +143,21 @@ func (r *KafkaSchemaReconciler) reconcileResource(
 		}
 	}
 
-	schemaId, err := srClient.RegisterSchema(
-		subjectName,
-		schemareg.RegisterSchemaReq{
-			Schema:     spec.Data.Schema,
-			SchemaType: spec.Data.Format,
-		},
-	)
+	schema, err := srClient.CreateSchema(subjectName, spec.Data.Schema, spec.Data.Format)
 	if err != nil {
 		return r.logError(
 			logger,
 			err,
 			ctx,
 			res,
-			v1beta1.RegisterSchema,
-			"Failed to register schema in registry")
+			v1beta1.CreateSchema,
+			"Failed to create schema in registry")
 	}
-	res.Status.SchemaId = schemaId
+	res.Status.SchemaId = schema.ID()
 
 	compatibility := spec.Data.Compatibility
 	if len(compatibility) > 0 {
-		err = srClient.SetCompatibilityMode(
-			subjectName,
-			schemareg.SetCompatibilityModeReq{
-				Compatibility: compatibility,
-			})
+		_, err = srClient.ChangeSubjectCompatibilityLevel(subjectName, compatibility)
 
 		if err != nil {
 			return r.logError(
@@ -164,7 +165,7 @@ func (r *KafkaSchemaReconciler) reconcileResource(
 				err,
 				ctx,
 				res,
-				v1beta1.SetCompatibilityMode,
+				v1beta1.ChangeCompatibilityLevel,
 				"Failed to update schema compatibility mode")
 		}
 	}
@@ -198,7 +199,7 @@ func (r *KafkaSchemaReconciler) reconcileResource(
 func (r *KafkaSchemaReconciler) deleteResource(
 	ctx context.Context,
 	res *v1beta1.KafkaSchema,
-	srClient *schemareg.SrClient,
+	srClient *srclient.SchemaRegistryClient,
 	logger logr.Logger) (ctrl.Result, error) {
 
 	// deleting / cleaning up resource

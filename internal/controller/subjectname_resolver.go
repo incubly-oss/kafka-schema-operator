@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/riferrei/srclient"
 
 	"incubly.oss/kafka-schema-operator/api/v1beta1"
 )
@@ -42,7 +43,7 @@ type AvroSchema struct {
 }
 
 func extractRecordName(data v1beta1.KafkaSchemaData) (string, error) {
-	if data.Format != v1beta1.AVRO {
+	if data.Format != srclient.Avro {
 		return "", fmt.Errorf("record name strategy is only supported for AVRO schemas")
 	}
 	avroSchema := AvroSchema{}

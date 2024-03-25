@@ -1,6 +1,7 @@
 package v1beta1
 
 import (
+	"github.com/riferrei/srclient"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -26,33 +27,12 @@ const (
 	TOPIC_RECORD NamingStrategy = "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy"
 )
 
-// +kubebuilder:validation:Enum=AVRO;JSON;PROTOBUF
-type SchemaFormat string
-
-const (
-	AVRO     SchemaFormat = "AVRO"
-	JSON     SchemaFormat = "JSON"
-	PROTOBUF SchemaFormat = "PROTOBUF"
-)
-
-// +kubebuilder:validation:Enum=NONE;BACKWARD;BACKWARD_TRANSITIVE;FORWARD;FORWARD_TRANSITIVE;FULL;FULL_TRANSITIVE
-type CompatibilityMode string
-
-const (
-	NONE                CompatibilityMode = "NONE"
-	BACKWARD            CompatibilityMode = "BACKWARD"
-	BACKWARD_TRANSITIVE CompatibilityMode = "BACKWARD_TRANSITIVE"
-	FORWARD             CompatibilityMode = "FORWARD"
-	FORWARD_TRANSITIVE  CompatibilityMode = "FORWARD_TRANSITIVE"
-	FULL                CompatibilityMode = "FULL"
-	FULL_TRANSITIVE     CompatibilityMode = "FULL_TRANSITIVE"
-)
-
 type KafkaSchemaData struct {
 	// Schema payload. Format depends on associated "format" field
 	Schema string `json:"schema"`
 	// Format of the provided schema
-	Format SchemaFormat `json:"format"`
+	// +kubebuilder:validation:Enum=AVRO;JSON;PROTOBUF
+	Format srclient.SchemaType `json:"format"`
 	/*
 		Compatibility defines schema compatibility mode for the subject.
 		If not provided, subject will inherit default compatibility mode defined in schema registry
@@ -60,7 +40,7 @@ type KafkaSchemaData struct {
 		for details.
 	*/
 	// +kubebuilder:validation:Enum=NONE;BACKWARD;BACKWARD_TRANSITIVE;FORWARD;FORWARD_TRANSITIVE;FULL;FULL_TRANSITIVE
-	Compatibility CompatibilityMode `json:"compatibility,omitempty"`
+	Compatibility srclient.CompatibilityLevel `json:"compatibility,omitempty"`
 }
 
 type SchemaRegistry struct {
@@ -127,7 +107,7 @@ type KafkaSchemaStatus struct {
 	// SchemaRegistryUrl is an effective URL of the schema registry this resource interacts with
 	SchemaRegistryUrl string `json:"schemaRegistryUrl,omitempty"`
 	// SchemaId is the identifier of the schema in the schema registry
-	SchemaId int `json:"keySchemaId,omitempty"`
+	SchemaId int `json:"schemaId,omitempty"`
 	// Subject is the schema registry subject (based on NamingStrategy)
 	Subject string `json:"subject,omitempty"`
 	// Healthy boolean reflects current health of the resource
@@ -146,14 +126,14 @@ type ReadyReason struct {
 }
 
 var (
-	InProgress           = ReadyReason{"InProgress", metav1.ConditionUnknown}
-	Complete             = ReadyReason{"Complete", metav1.ConditionTrue}
-	NameStrategy         = ReadyReason{"NameStrategy", metav1.ConditionFalse}
-	SchemaRegistryClient = ReadyReason{"SchemaRegistryClient", metav1.ConditionFalse}
-	RegisterSchema       = ReadyReason{"RegisterSchema", metav1.ConditionFalse}
-	ResourceUpdate       = ReadyReason{"ResourceUpdate", metav1.ConditionFalse}
-	SetCompatibilityMode = ReadyReason{"SetCompatibilityMode", metav1.ConditionFalse}
-	Cleanup              = ReadyReason{"Cleanup", metav1.ConditionFalse}
+	InProgress               = ReadyReason{"InProgress", metav1.ConditionUnknown}
+	Complete                 = ReadyReason{"Complete", metav1.ConditionTrue}
+	NameStrategy             = ReadyReason{"NameStrategy", metav1.ConditionFalse}
+	SchemaRegistryClient     = ReadyReason{"SchemaRegistryClient", metav1.ConditionFalse}
+	CreateSchema             = ReadyReason{"CreateSchema", metav1.ConditionFalse}
+	ResourceUpdate           = ReadyReason{"ResourceUpdate", metav1.ConditionFalse}
+	ChangeCompatibilityLevel = ReadyReason{"ChangeCompatibilityLevel", metav1.ConditionFalse}
+	Cleanup                  = ReadyReason{"Cleanup", metav1.ConditionFalse}
 )
 
 //+kubebuilder:object:root=true

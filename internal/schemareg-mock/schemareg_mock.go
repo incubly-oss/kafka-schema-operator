@@ -2,14 +2,13 @@ package schemareg_mock
 
 import (
 	"fmt"
+	"github.com/riferrei/srclient"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
-
-	"incubly.oss/kafka-schema-operator/api/v1beta1"
-	"incubly.oss/kafka-schema-operator/internal/schemareg"
 
 	"github.com/go-logr/logr"
 	. "github.com/onsi/gomega"
@@ -23,7 +22,7 @@ type SchemaRef struct {
 }
 
 type Subject struct {
-	CompatibilityMode v1beta1.CompatibilityMode
+	CompatibilityMode srclient.CompatibilityLevel
 	SchemaRefs        []SchemaRef
 }
 
@@ -71,7 +70,7 @@ func (m *SchemaRegMock) GetServer() *ghttp.Server {
 	server.RouteToHandler(
 		"POST",
 		regexp.MustCompile(`^/subjects/[a-zA-Z0-9-_.]+/versions$`),
-		m.registerSubject(),
+		m.createSubject(),
 	)
 	server.RouteToHandler(
 		"DELETE",
@@ -81,25 +80,42 @@ func (m *SchemaRegMock) GetServer() *ghttp.Server {
 	server.RouteToHandler(
 		"PUT",
 		regexp.MustCompile(`^/config/[a-zA-Z0-9-_.]+$`),
-		m.setCompatibilityMode(),
+		m.changeCompatibilityLevel(),
+	)
+	server.RouteToHandler(
+		"GET",
+		regexp.MustCompile(`^/schemas/ids/[0-9]+$`),
+		m.getSchemaById(),
 	)
 
 	return server
 }
 
-func (m *SchemaRegMock) registerSubject() http.HandlerFunc {
+type createSchemaReq struct {
+	Schema     string              `json:"schema"`
+	SchemaType srclient.SchemaType `json:"schemaType,omitempty"`
+}
+type getSchemaRes struct {
+	Schema string `json:"schema"`
+}
+
+type changeCompatibilityLevelReq struct {
+	Compatibility srclient.CompatibilityLevel `json:"compatibility"`
+}
+
+func (m *SchemaRegMock) createSubject() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		if m.handledByErrorsInjector(RegisterSubject, w) {
+		if m.handledByErrorsInjector(CreateSubject, w) {
 			return
 		}
 
 		subjectName := strings.Split(req.URL.Path, "/")[2]
 
-		m.logger.Info("Schema-reg: registering subject " + subjectName)
+		m.logger.Info("Schema-reg: creating subject " + subjectName)
 
-		registerSchemaReq := readJsonBody(req, &schemareg.RegisterSchemaReq{})
+		createSchemaReq := readJsonBody(req, &createSchemaReq{})
 
-		schema, parseSchemaErr := parseSchema(*registerSchemaReq)
+		schema, parseSchemaErr := parseSchema(*createSchemaReq)
 		if parseSchemaErr != nil {
 			w.WriteHeader(422)
 			_, _ = w.Write([]byte(`{"error_code":42201,"message":"Invalid schema"}`))
@@ -108,7 +124,7 @@ func (m *SchemaRegMock) registerSubject() http.HandlerFunc {
 
 		if _, ok := m.Subjects[subjectName]; !ok {
 			m.Subjects[subjectName] = &Subject{
-				CompatibilityMode: v1beta1.BACKWARD,
+				CompatibilityMode: srclient.Backward,
 				SchemaRefs:        []SchemaRef{},
 			}
 		}
@@ -121,8 +137,30 @@ func (m *SchemaRegMock) registerSubject() http.HandlerFunc {
 	}
 }
 
-func parseSchema(req schemareg.RegisterSchemaReq) (string, error) {
-	if req.SchemaType == v1beta1.AVRO {
+func (m *SchemaRegMock) getSchemaById() http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		schemaIdString := strings.Split(req.URL.Path, "/")[3]
+		schemaId, err := strconv.Atoi(schemaIdString)
+		if err != nil {
+			m.logger.Error(err, fmt.Sprintf("Failed to parse schemaId=%s to int", schemaIdString))
+			w.WriteHeader(404)
+			_, _ = w.Write([]byte(`{"error_code":404,"message":"HTTP 404 Not Found"}`))
+		}
+		maybeSchema := m.Schemas[schemaId]
+		if len(maybeSchema) == 0 {
+			w.WriteHeader(404)
+			_, _ = w.Write([]byte(fmt.Sprintf(`{"error_code":40403,"message":"Schema %d not found"}`, schemaId)))
+		} else {
+			res := getSchemaRes{Schema: maybeSchema}
+			bytes, _ := json.Marshal(res)
+			w.WriteHeader(200)
+			_, _ = w.Write(bytes)
+		}
+	}
+}
+
+func parseSchema(req createSchemaReq) (string, error) {
+	if req.SchemaType == srclient.Avro || len(req.SchemaType) == 0 {
 		return parseAvroSchema(req.Schema)
 	} else {
 		// TODO: implement for other schema types if needed. for now they're all valid
@@ -201,13 +239,13 @@ func (m *SchemaRegMock) deleteSubject() http.HandlerFunc {
 	}
 }
 
-func (m *SchemaRegMock) setCompatibilityMode() http.HandlerFunc {
+func (m *SchemaRegMock) changeCompatibilityLevel() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		if m.handledByErrorsInjector(SetCompatibilityMode, w) {
+		if m.handledByErrorsInjector(ChangeCompatibilityLevel, w) {
 			return
 		}
 		subjectName := strings.Split(req.URL.Path, "/")[2]
-		compatibilityMode := readJsonBody(req, &schemareg.SetCompatibilityModeReq{})
+		compatibilityMode := readJsonBody(req, &changeCompatibilityLevelReq{})
 		if validateCompatibilityMode(compatibilityMode.Compatibility) != nil {
 			w.WriteHeader(422)
 			_, _ = w.Write([]byte(`{"error_code":42203,"message":"Invalid compatibility level"}`))
@@ -215,7 +253,8 @@ func (m *SchemaRegMock) setCompatibilityMode() http.HandlerFunc {
 		if existingSubject, ok := m.Subjects[subjectName]; ok {
 			existingSubject.CompatibilityMode = compatibilityMode.Compatibility
 			w.WriteHeader(200)
-			// TODO OK response
+			res, _ := json.Marshal(compatibilityMode)
+			_, _ = w.Write(res)
 		} else {
 			w.WriteHeader(500)
 			// TODO response if subject doesn't exist?
@@ -237,7 +276,7 @@ func (m *SchemaRegMock) handledByErrorsInjector(api InjectOnApi, writer http.Res
 }
 
 func (m *SchemaRegMock) Clear() {
-	m.logger.Info("Removing previously registered subjects and schemas")
+	m.logger.Info("Removing previously created subjects and schemas")
 	m.Subjects = map[string]*Subject{}
 	m.Schemas = map[int]string{}
 	m.SoftDeletedSubjects = map[string]*Subject{}
@@ -248,9 +287,9 @@ func (m *SchemaRegMock) Clear() {
 type InjectOnApi string
 
 const (
-	RegisterSubject      InjectOnApi = "RegisterSubject"
-	SetCompatibilityMode InjectOnApi = "SetCompatibilityMode"
-	DeleteSubject        InjectOnApi = "DeleteSubject"
+	CreateSubject            InjectOnApi = "CreateSubject"
+	ChangeCompatibilityLevel InjectOnApi = "ChangeCompatibilityLevel"
+	DeleteSubject            InjectOnApi = "DeleteSubject"
 )
 
 type InjectedError struct {
@@ -263,7 +302,7 @@ func (m *SchemaRegMock) InjectError(error InjectedError) {
 	m.injectedErrors[error.OnApi] = &error
 }
 
-func validateCompatibilityMode(mode v1beta1.CompatibilityMode) error {
+func validateCompatibilityMode(mode srclient.CompatibilityLevel) error {
 	// implement if needed ;)
 	return nil
 }

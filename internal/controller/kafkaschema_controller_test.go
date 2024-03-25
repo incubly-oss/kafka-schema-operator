@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/riferrei/srclient"
 	"time"
 
 	"incubly.oss/kafka-schema-operator/api/v1beta1"
@@ -32,7 +33,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				SubjectName: expectedSubjectName,
 				Schema:      `"string"`,
-				Format:      v1beta1.AVRO,
+				Format:      srclient.Avro,
 			})
 			Ω(whenCreatingSchema(ctx, aSchema)).ShouldNot(BeNil())
 
@@ -43,14 +44,14 @@ var _ = Describe("KafkaSchema Controller", func() {
 			By("When schema is created without naming strategy and missing SubjectName")
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				Schema: `"string"`,
-				Format: v1beta1.AVRO,
+				Format: srclient.Avro,
 			})
 			_, err := whenCreatingSchema(ctx, aSchema)
 
 			By("Then reconciliation should fail")
 			Expect(err).Should(HaveOccurred())
 
-			By("And subject shouldn't be registered")
+			By("And subject shouldn't be created")
 			Expect(srMock.Subjects).Should(BeEmpty())
 		})
 		It("Should refer to TopicName in subject if TOPIC strategy", func() {
@@ -59,7 +60,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 				NamingStrategy: v1beta1.TOPIC,
 				TopicName:      "MY_TOPIC",
 				Schema:         `"string"`,
-				Format:         v1beta1.AVRO,
+				Format:         srclient.Avro,
 			})
 
 			Ω(whenCreatingSchema(ctx, aSchema)).ShouldNot(BeNil())
@@ -72,14 +73,14 @@ var _ = Describe("KafkaSchema Controller", func() {
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				NamingStrategy: v1beta1.TOPIC,
 				Schema:         `"string"`,
-				Format:         v1beta1.AVRO,
+				Format:         srclient.Avro,
 			})
 			_, err := whenCreatingSchema(ctx, aSchema)
 
 			By("Then reconciliation should fail")
 			Expect(err).Should(HaveOccurred())
 
-			By("And subject shouldn't be registered")
+			By("And subject shouldn't be created")
 			Expect(srMock.Subjects).Should(BeEmpty())
 		})
 		It("Should extract full record name from schema when RECORD strategy", func() {
@@ -87,7 +88,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				NamingStrategy: v1beta1.RECORD,
 				Schema:         `{"type":"record", "package":"foo.bar", "name":"BAZ", "other":"fields"}`,
-				Format:         v1beta1.AVRO,
+				Format:         srclient.Avro,
 			})
 			Ω(whenCreatingSchema(ctx, aSchema)).ShouldNot(BeNil())
 
@@ -99,7 +100,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				NamingStrategy: v1beta1.RECORD,
 				Schema:         `{"type":"record", "name":"BAZ", "other":"fields"}`,
-				Format:         v1beta1.AVRO,
+				Format:         srclient.Avro,
 			})
 			Ω(whenCreatingSchema(ctx, aSchema)).ShouldNot(BeNil())
 
@@ -111,14 +112,14 @@ var _ = Describe("KafkaSchema Controller", func() {
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				NamingStrategy: v1beta1.RECORD,
 				Schema:         `{"type":"record", "name":"BAZ", "other":"fields"}`,
-				Format:         v1beta1.JSON,
+				Format:         srclient.Json,
 			})
 			_, err := whenCreatingSchema(ctx, aSchema)
 
 			By("Then reconciliation should fail")
 			Expect(err).Should(HaveOccurred())
 
-			By("And subject shouldn't be registered")
+			By("And subject shouldn't be created")
 			Expect(srMock.Subjects).Should(BeEmpty())
 		})
 		It("Should fail if RECORD strategy and AVRO schema without name", func() {
@@ -126,14 +127,14 @@ var _ = Describe("KafkaSchema Controller", func() {
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				NamingStrategy: v1beta1.RECORD,
 				Schema:         `{"type":"record", "package":"foo.bar", "other":"fields"}`,
-				Format:         v1beta1.AVRO,
+				Format:         srclient.Avro,
 			})
 			_, err := whenCreatingSchema(ctx, aSchema)
 
 			By("Then reconciliation should fail")
 			Expect(err).Should(HaveOccurred())
 
-			By("And subject shouldn't be registered")
+			By("And subject shouldn't be created")
 			Expect(srMock.Subjects).Should(BeEmpty())
 		})
 		It("Should fail if RECORD strategy and AVRO schema but not record", func() {
@@ -141,14 +142,14 @@ var _ = Describe("KafkaSchema Controller", func() {
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				NamingStrategy: v1beta1.RECORD,
 				Schema:         `{"package":"foo.bar", "name":"BAZ", "other":"fields"}`,
-				Format:         v1beta1.AVRO,
+				Format:         srclient.Avro,
 			})
 			_, err := whenCreatingSchema(ctx, aSchema)
 
 			By("Then reconciliation should fail")
 			Expect(err).Should(HaveOccurred())
 
-			By("And subject shouldn't be registered")
+			By("And subject shouldn't be created")
 			Expect(srMock.Subjects).Should(BeEmpty())
 		})
 		It("Should create subject when TOPIC_RECORD strategy", func() {
@@ -158,7 +159,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 				NamingStrategy: v1beta1.TOPIC_RECORD,
 				TopicName:      topicName,
 				Schema:         `{"type":"record", "package":"foo.bar", "name":"BAZ", "other":"fields"}`,
-				Format:         v1beta1.AVRO,
+				Format:         srclient.Avro,
 			})
 			Ω(whenCreatingSchema(ctx, aSchema)).ShouldNot(BeNil())
 
@@ -206,7 +207,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 			By("When creating new schema")
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				SubjectName: "test",
-				Format:      v1beta1.AVRO,
+				Format:      srclient.Avro,
 				Schema:      `"string"`,
 			})
 
@@ -227,7 +228,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 		It("Should update status on failed NamingStrategy", func() {
 			By("When trying to create resource with invalid name strategy")
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
-				Format: v1beta1.AVRO,
+				Format: srclient.Avro,
 				Schema: `"string"`,
 			})
 			_, err := whenCreatingSchema(ctx, aSchema)
@@ -255,11 +256,11 @@ var _ = Describe("KafkaSchema Controller", func() {
 			By("Then failed ready condition should be set")
 			expectReadyConditionWithReason(ctx, aSchema, v1beta1.Cleanup)
 		})
-		It("Should update status on failed RegisterSchema", func() {
+		It("Should update status on failed CreateSchema", func() {
 			By("When trying to create resource with invalid schema")
 			aSchema := aSchemaWithNameStrategy(NameStrategy{
 				SubjectName: "test",
-				Format:      v1beta1.AVRO,
+				Format:      srclient.Avro,
 				Schema:      `invalid`,
 			})
 			_, err := whenCreatingSchema(ctx, aSchema)
@@ -268,12 +269,12 @@ var _ = Describe("KafkaSchema Controller", func() {
 			Expect(err).ToNot(Succeed())
 
 			By("Then failed ready condition should be set")
-			expectReadyConditionWithReason(ctx, aSchema, v1beta1.RegisterSchema)
+			expectReadyConditionWithReason(ctx, aSchema, v1beta1.CreateSchema)
 		})
-		It("Should update status on failed SetCompatibilityMode", func() {
-			By("Given SetCompatibilityMode will fails in schema registry")
+		It("Should update status on failed ChangeCompatibilityLevel", func() {
+			By("Given ChangeCompatibilityLevel will fails in schema registry")
 			srMock.InjectError(schemaregmock.InjectedError{
-				OnApi:      schemaregmock.SetCompatibilityMode,
+				OnApi:      schemaregmock.ChangeCompatibilityLevel,
 				StatusCode: 500,
 			})
 
@@ -285,7 +286,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 			Expect(err).ToNot(Succeed())
 
 			By("Then failed ready condition should be set")
-			expectReadyConditionWithReason(ctx, aSchema, v1beta1.SetCompatibilityMode)
+			expectReadyConditionWithReason(ctx, aSchema, v1beta1.ChangeCompatibilityLevel)
 		})
 	})
 })
@@ -293,16 +294,16 @@ var _ = Describe("KafkaSchema Controller", func() {
 func expectReadyConditionWithReason(ctx context.Context, schema *v1beta1.KafkaSchema, reason v1beta1.ReadyReason) v1beta1.KafkaSchemaStatus {
 	current := &v1beta1.KafkaSchema{}
 
-	ExpectWithOffset(1, k8sClient.SubResource("status").Get(ctx, schema, current)).
+	Expect(k8sClient.SubResource("status").Get(ctx, schema, current)).
 		To(Succeed())
 	status := current.Status
-	ExpectWithOffset(1, status.Conditions).ToNot(BeEmpty())
+	Expect(status.Conditions).ToNot(BeEmpty())
 
 	ready := meta.FindStatusCondition(status.Conditions, "Ready")
-	ExpectWithOffset(1, ready.Status).Should(BeEquivalentTo(reason.Status))
-	ExpectWithOffset(1, ready.LastTransitionTime.IsZero()).
+	Expect(ready.Status).Should(BeEquivalentTo(reason.Status))
+	Expect(ready.LastTransitionTime.IsZero()).
 		To(BeFalseBecause("LastTransitionTime was not set"))
-	ExpectWithOffset(1, ready.Reason).To(BeEquivalentTo(reason.Name))
+	Expect(ready.Reason).To(BeEquivalentTo(reason.Name))
 	return status
 }
 
@@ -318,14 +319,14 @@ func whenDeletingPreviouslyCreatedSchema(ctx context.Context, aSchema *v1beta1.K
 	Ω(whenCreatingSchema(ctx, aSchema)).ShouldNot(BeNil())
 
 	By("-- verifying that subjects were created")
-	ExpectWithOffset(1, srMock.Subjects).Should(HaveLen(1))
+	Expect(srMock.Subjects).Should(HaveLen(1))
 
 	By("-- deleting schema")
-	ExpectWithOffset(1, k8sClient.Delete(ctx, aSchema)).
+	Expect(k8sClient.Delete(ctx, aSchema)).
 		To(Succeed())
-	ExpectWithOffset(1, k8sClient.Get(ctx, lookupName, aSchema)).
+	Expect(k8sClient.Get(ctx, lookupName, aSchema)).
 		To(Succeed())
-	ExpectWithOffset(1, aSchema.DeletionTimestamp.IsZero()).
+	Expect(aSchema.DeletionTimestamp.IsZero()).
 		To(BeFalseBecause("Resource was not marked for deletion"))
 
 	return cut.Reconcile(ctx, reconcile.Request{NamespacedName: lookupName})
@@ -339,9 +340,9 @@ func whenCreatingSchema(ctx context.Context, aSchema *v1beta1.KafkaSchema) (ctrl
 	}
 
 	By("-- creating schema")
-	ExpectWithOffset(1, k8sClient.Create(ctx, aSchema)).
+	Expect(k8sClient.Create(ctx, aSchema)).
 		To(Succeed())
-	ExpectWithOffset(1, k8sClient.Get(ctx, lookupName, aSchema)).
+	Expect(k8sClient.Get(ctx, lookupName, aSchema)).
 		To(Succeed())
 	return cut.Reconcile(ctx, reconcile.Request{NamespacedName: lookupName})
 }
@@ -361,8 +362,8 @@ func aSchemaWithCleanupPolicy(policy v1beta1.CleanupPolicy) *v1beta1.KafkaSchema
 			CleanupPolicy: policy,
 			Data: v1beta1.KafkaSchemaData{
 				Schema:        `"string"`,
-				Format:        v1beta1.AVRO,
-				Compatibility: v1beta1.BACKWARD,
+				Format:        srclient.Avro,
+				Compatibility: srclient.Backward,
 			},
 		},
 	}
@@ -373,7 +374,7 @@ type NameStrategy struct {
 	SubjectName    string
 	TopicName      string
 	Schema         string
-	Format         v1beta1.SchemaFormat
+	Format         srclient.SchemaType
 }
 
 func aSchemaWithNameStrategy(args NameStrategy) *v1beta1.KafkaSchema {
@@ -390,7 +391,7 @@ func aSchemaWithNameStrategy(args NameStrategy) *v1beta1.KafkaSchema {
 			Data: v1beta1.KafkaSchemaData{
 				Schema:        args.Schema,
 				Format:        args.Format,
-				Compatibility: v1beta1.NONE,
+				Compatibility: srclient.None,
 			},
 		},
 	}
