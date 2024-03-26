@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	"incubly.oss/kafka-schema-operator/api/v1beta1"
 	"incubly.oss/kafka-schema-operator/internal/schemareg"
 
@@ -76,22 +78,14 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	srClient, err := schemareg.NewClient(&spec.SchemaRegistry, logger)
 
 	if err != nil {
-		return r.logError(
-			logger,
-			err,
-			ctx,
-			res,
+		return r.logError(logger, err, ctx, res,
 			v1beta1.SchemaRegistryClient,
 			"Failed to instantiate Schema Registry Client")
 	}
 
 	subjectName, err := resolveSubjectName(&spec)
 	if err != nil {
-		return r.logError(
-			logger,
-			err,
-			ctx,
-			res,
+		return r.logError(logger, err, ctx, res,
 			v1beta1.NameStrategy,
 			"Failed to resolve subject name")
 	}
@@ -122,11 +116,7 @@ func (r *KafkaSchemaReconciler) reconcileResource(
 	if controllerutil.AddFinalizer(res, finalizer) {
 		err := r.Update(ctx, res)
 		if err != nil {
-			return r.logError(
-				logger,
-				err,
-				ctx,
-				res,
+			return r.logError(logger, err, ctx, res,
 				v1beta1.ResourceUpdate,
 				"Failed to add finalizer to KafkaSchema CR")
 		}
@@ -140,11 +130,7 @@ func (r *KafkaSchemaReconciler) reconcileResource(
 		},
 	)
 	if err != nil {
-		return r.logError(
-			logger,
-			err,
-			ctx,
-			res,
+		return r.logError(logger, err, ctx, res,
 			v1beta1.RegisterSchema,
 			"Failed to register schema in registry")
 	}
@@ -159,11 +145,7 @@ func (r *KafkaSchemaReconciler) reconcileResource(
 			})
 
 		if err != nil {
-			return r.logError(
-				logger,
-				err,
-				ctx,
-				res,
+			return r.logError(logger, err, ctx, res,
 				v1beta1.SetCompatibilityMode,
 				"Failed to update schema compatibility mode")
 		}
@@ -186,13 +168,12 @@ func (r *KafkaSchemaReconciler) reconcileResource(
 	}
 
 	logger.Info("KafkaSchema CR successfully reconciled")
-	if r.RequeueDelay < 0 {
-		// negative delay - don't requeue
-		return ctrl.Result{}, nil
-	} else {
-		// requeue will be delayed with static interval (if delay>0) or exponential backoff (if delay=0)
-		return ctrl.Result{Requeue: true, RequeueAfter: r.RequeueDelay}, nil
-	}
+	/*
+		delay<0 - don't requeue (Requeue: false)
+		delay=0 - exponential backoff (Requeue: true, RequeueAfter: 0)
+		delay>0 - static interval (Requeue: true, RequeueAfter should be respected)
+	*/
+	return ctrl.Result{Requeue: r.RequeueDelay >= 0, RequeueAfter: r.RequeueDelay}, nil
 }
 
 func (r *KafkaSchemaReconciler) deleteResource(
@@ -204,11 +185,7 @@ func (r *KafkaSchemaReconciler) deleteResource(
 	// deleting / cleaning up resource
 	err := performCleanup(res, srClient)
 	if err != nil {
-		return r.logError(
-			logger,
-			err,
-			ctx,
-			res,
+		return r.logError(logger, err, ctx, res,
 			v1beta1.Cleanup,
 			"Failed to perform schema registry cleanup")
 	}
@@ -217,11 +194,7 @@ func (r *KafkaSchemaReconciler) deleteResource(
 	controllerutil.RemoveFinalizer(res, finalizer)
 	err = r.Update(ctx, res)
 	if err != nil {
-		return r.logError(
-			logger,
-			err,
-			ctx,
-			res,
+		return r.logError(logger, err, ctx, res,
 			v1beta1.Cleanup,
 			"Failed to delete KafkaSchema CR")
 	}
@@ -257,5 +230,16 @@ func (r *KafkaSchemaReconciler) logError(
 func (r *KafkaSchemaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.KafkaSchema{}).
+		WithEventFilter(ignoreIfBeforeRequeueDelay(r.getStatus, r.RequeueDelay)).
 		Complete(r)
+}
+
+func (r *KafkaSchemaReconciler) getStatus(obj client.Object) (Status, error) {
+	schema := &v1beta1.KafkaSchema{}
+	err := r.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, schema)
+	status := Status{
+		LastRetryTs: schema.Status.LastRetryTsEpoch,
+		RetryCount:  schema.Status.RetryCount,
+	}
+	return status, err
 }
