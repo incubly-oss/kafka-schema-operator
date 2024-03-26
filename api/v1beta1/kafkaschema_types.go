@@ -43,12 +43,19 @@ type KafkaSchemaData struct {
 	Compatibility srclient.CompatibilityLevel `json:"compatibility,omitempty"`
 }
 
+type BasicAuth struct {
+	Username           string `json:"username"`
+	PasswordSecretName string `json:"passwordSecretName"`
+	PasswordSecretKey  string `json:"passwordSecretKey"`
+}
+
 type SchemaRegistry struct {
 	/*
 		BaseUrl of the schema registry this schema should be registered to.
 		If not provided, controller will fall back to default configuration
 	*/
-	BaseUrl string `json:"baseUrl,omitempty"`
+	BaseUrl   string    `json:"baseUrl,omitempty"`
+	BasicAuth BasicAuth `json:"basicAuth,omitempty"`
 }
 
 // KafkaSchemaSpec defines the desired state of KafkaSchema

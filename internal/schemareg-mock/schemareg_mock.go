@@ -217,13 +217,18 @@ func (m *SchemaRegMock) deleteSubject() http.HandlerFunc {
 		queryParams, _ := url.ParseQuery(req.URL.RawQuery)
 		isHardDelete := queryParams.Get("permanent") == "true"
 		if isHardDelete {
-			if existingSubject, ok := m.SoftDeletedSubjects[subjectName]; ok {
-				m.HardDeletedSubjects[subjectName] = existingSubject
+			if softDeletedSubject, ok := m.SoftDeletedSubjects[subjectName]; ok {
+				m.HardDeletedSubjects[subjectName] = softDeletedSubject
 				w.WriteHeader(200)
 				// TODO OK response
 			} else {
-				w.WriteHeader(500)
-				// TODO response if subject doesn't exist?
+				if m.Subjects[subjectName] != nil {
+					w.WriteHeader(404)
+					_, _ = w.Write([]byte(fmt.Sprintf(`{"error_code":40401,"message":"Subject '%s' not found."}`, subjectName)))
+				} else {
+					w.WriteHeader(404)
+					_, _ = w.Write([]byte(fmt.Sprintf(`{"error_code":40405,"message":"Subject '%s' was not deleted first before being permanently deleted"}%`, subjectName)))
+				}
 			}
 		} else {
 			if existingSubject, ok := m.Subjects[subjectName]; ok {
@@ -232,8 +237,8 @@ func (m *SchemaRegMock) deleteSubject() http.HandlerFunc {
 				w.WriteHeader(200)
 				// TODO OK response
 			} else {
-				w.WriteHeader(500)
-				// TODO response if subject doesn't exist?
+				w.WriteHeader(404)
+				_, _ = w.Write([]byte(fmt.Sprintf(`{"error_code":40401,"message":"Subject '%s' not found."}`, subjectName)))
 			}
 		}
 	}

@@ -2,9 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
-	"net/url"
-	"os"
 	"strconv"
 	"time"
 
@@ -76,8 +73,6 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	spec := res.Spec
 
 	srBaseUrl, err := extractSchemaRegistryUrl(spec.SchemaRegistry)
-	srClient := srclient.CreateSchemaRegistryClient(srBaseUrl.String())
-
 	if err != nil {
 		return r.logError(
 			logger,
@@ -86,6 +81,14 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			res,
 			v1beta1.SchemaRegistryClient,
 			"Failed to instantiate Schema Registry Client")
+	}
+
+	srClient := srclient.CreateSchemaRegistryClient(srBaseUrl.String())
+	err = r.SetCredentials(ctx, srClient, res)
+	if err != nil {
+		return r.logError(logger, err, ctx, res,
+			v1beta1.SchemaRegistryClient,
+			"Failed to configure credentials for Schema Registry Client")
 	}
 
 	subjectName, err := resolveSubjectName(&spec)
@@ -110,18 +113,6 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return r.reconcileResource(ctx, res, srClient, logger)
 	} else {
 		return r.deleteResource(ctx, res, srClient, logger)
-	}
-}
-
-func extractSchemaRegistryUrl(registry v1beta1.SchemaRegistry) (*url.URL, error) {
-	if len(registry.BaseUrl) > 0 {
-		return url.Parse(registry.BaseUrl)
-	}
-	defaultBaseUrl := os.Getenv("SCHEMA_REGISTRY_BASE_URL")
-	if len(defaultBaseUrl) > 0 {
-		return url.Parse(defaultBaseUrl)
-	} else {
-		return nil, fmt.Errorf("base URL for schema registry not set")
 	}
 }
 
