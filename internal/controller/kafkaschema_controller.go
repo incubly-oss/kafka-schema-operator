@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"k8s.io/apimachinery/pkg/types"
-
 	"incubly.oss/kafka-schema-operator/api/v1beta1"
 	"incubly.oss/kafka-schema-operator/internal/schemareg"
 
@@ -68,11 +66,10 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		"resource::uid", res.UID,
 	)
 
-	// TODO: temporarily disabled to verify if it fixes the reconciliation loop without delays
-	//if res.SetReadyReason(v1beta1.InProgress, "Reconciliation in progress") {
-	//	// ignoring potential error, it's not critical here
-	//	_ = r.Status().Update(ctx, res)
-	//}
+	if res.Generation == res.Status.ObservedGeneration {
+		logger.Info(".statusObservedGeneration matches resource generation. No reconciliation needed")
+		return ctrl.Result{Requeue: r.RequeueDelay >= 0, RequeueAfter: r.RequeueDelay}, nil
+	}
 
 	spec := res.Spec
 
@@ -154,9 +151,8 @@ func (r *KafkaSchemaReconciler) reconcileResource(
 
 	res.SetReadyReason(v1beta1.Complete, "Reconciliation complete")
 	res.Status.Healthy = true
-	res.Status.RetryCount = 0
 	res.Status.Status = "True"
-	res.Status.LastRetryTsEpoch = time.Now().UnixMilli()
+	res.Status.ObservedGeneration = res.Generation
 
 	// force-update (without if on SetReadyReason) to apply all changes
 	if err := r.Status().Update(ctx, res); err != nil {
@@ -215,9 +211,8 @@ func (r *KafkaSchemaReconciler) logError(
 ) (ctrl.Result, error) {
 	logger.Error(err, msg)
 	res.Status.Healthy = false
-	res.Status.RetryCount++
 	res.Status.Status = "False"
-	res.Status.LastRetryTsEpoch = time.Now().UnixMilli()
+	res.Status.ObservedGeneration = res.Generation
 
 	if res.SetReadyReason(reason, msg) {
 		// ignoring the update error - we should return the actual root cause instead
@@ -231,16 +226,5 @@ func (r *KafkaSchemaReconciler) logError(
 func (r *KafkaSchemaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1beta1.KafkaSchema{}).
-		WithEventFilter(ignoreIfBeforeRequeueDelay(r.getStatus, r.RequeueDelay)).
 		Complete(r)
-}
-
-func (r *KafkaSchemaReconciler) getStatus(obj client.Object) (Status, error) {
-	schema := &v1beta1.KafkaSchema{}
-	err := r.Get(context.TODO(), types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}, schema)
-	status := Status{
-		LastRetryTs: schema.Status.LastRetryTsEpoch,
-		RetryCount:  schema.Status.RetryCount,
-	}
-	return status, err
 }

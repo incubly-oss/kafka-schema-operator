@@ -134,10 +134,8 @@ type KafkaSchemaStatus struct {
 	Healthy bool `json:"healthy,omitempty"`
 	// Status is equivalent to Healthy, but with format based on pod status
 	Status string `json:"status,omitempty"`
-	// RetryCount is incremented on any subsequent failure (and reset to 0 on each success)
-	RetryCount int `json:"retryCount,omitempty"`
-	// LastRetryTsEpoch timestamp of last retry attempt, in epoch millis
-	LastRetryTsEpoch int64 `json:"lastRetryTsEpoch,omitempty"`
+	// ObservedGeneration TODO
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 type ReadyReason struct {

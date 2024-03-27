@@ -1,21 +1,12 @@
 # Changelog
-## [1.0.2] - 2024-03-27
+## [1.1.0] - 2024-03-27
 
 ### Added
 
 ### Changed
 
 ### Fixed
-- Excluding DeleteEvents from event_filter predicate to re-enable instant cleanup
-
-## [1.0.1] - 2024-03-26
-
-### Added
-
-### Changed
-
-### Fixed
-- Temporary fix for instant reconciliation problem
+- Fixed "instant reconciliation loop" by comparing resource generations
 
 ## [1.0.0] - 2024-03-24
 
