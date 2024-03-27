@@ -1,12 +1,12 @@
 # Changelog
-## [1.0.1] - 2024-03-26
+## [1.1.0] - 2024-03-27
 
 ### Added
 
 ### Changed
 
 ### Fixed
-- Temporary fix for instant reconciliation problem
+- Fixed "instant reconciliation loop" by comparing resource generations
 
 ## [1.0.0] - 2024-03-24
 
