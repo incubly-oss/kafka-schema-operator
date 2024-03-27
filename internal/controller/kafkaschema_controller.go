@@ -68,10 +68,11 @@ func (r *KafkaSchemaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		"resource::uid", res.UID,
 	)
 
-	if res.SetReadyReason(v1beta1.InProgress, "Reconciliation in progress") {
-		// ignoring potential error, it's not critical here
-		_ = r.Status().Update(ctx, res)
-	}
+	// TODO: temporarily disabled to verify if it fixes the reconciliation loop without delays
+	//if res.SetReadyReason(v1beta1.InProgress, "Reconciliation in progress") {
+	//	// ignoring potential error, it's not critical here
+	//	_ = r.Status().Update(ctx, res)
+	//}
 
 	spec := res.Spec
 

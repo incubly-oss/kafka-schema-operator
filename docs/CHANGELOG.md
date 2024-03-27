@@ -1,4 +1,13 @@
 # Changelog
+## [1.0.2] - 2024-03-27
+
+### Added
+
+### Changed
+
+### Fixed
+- Excluding DeleteEvents from event_filter predicate to re-enable instant cleanup
+
 ## [1.0.1] - 2024-03-26
 
 ### Added
