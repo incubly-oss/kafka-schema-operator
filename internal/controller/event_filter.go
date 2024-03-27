@@ -52,7 +52,7 @@ func ignoreIfBeforeRequeueDelay(
 			return check(e.Object)
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-			return check(e.Object)
+			return true
 		},
 		GenericFunc: func(e event.GenericEvent) bool {
 			return check(e.Object)
