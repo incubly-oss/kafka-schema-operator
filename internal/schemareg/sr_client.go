@@ -1,6 +1,7 @@
 package schemareg
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -65,7 +66,12 @@ func (c *SrClient) DeleteSubject(subject string, permanent bool) error {
 		map[string]string{
 			"permanent": strconv.FormatBool(permanent),
 		})
-	return err
+	if errors.As(err, &NotFound{}) {
+		c.logger.Info("ignoring 404 Not Found error on schema deletion attempt: " + err.Error())
+		return nil
+	} else {
+		return err
+	}
 }
 
 func (c *SrClient) SetCompatibilityMode(subject string, req SetCompatibilityModeReq) error {
@@ -141,18 +147,30 @@ func (c *SrClient) handleHttpSuccess(resp *http.Response) (string, error) {
 }
 
 func (c *SrClient) handleHttpError(resp *http.Response) error {
-	if resp.StatusCode < 300 {
-		return nil
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.logger.Error(err, "Cannot read http response body")
+	}
+	if bodyBytes == nil {
+		return toError(resp.StatusCode, "")
 	} else {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			c.logger.Error(err, "Cannot read http response body")
-		}
-		if bodyBytes == nil {
-			return fmt.Errorf("schema registry error: %s", resp.Status)
-		} else {
-			return fmt.Errorf("schema registry error: %s, %s", resp.Status, string(bodyBytes))
-		}
+		return toError(resp.StatusCode, string(bodyBytes))
+	}
+}
+
+type NotFound struct {
+	msg string
+}
+
+func (e NotFound) Error() string {
+	return e.msg
+}
+
+func toError(status int, s string) error {
+	if status == 404 {
+		return NotFound{s}
+	} else {
+		return fmt.Errorf("%d, %s", status, s)
 	}
 }
 

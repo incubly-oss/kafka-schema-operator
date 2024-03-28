@@ -71,23 +71,23 @@ func (m *SchemaRegMock) GetServer() *ghttp.Server {
 	server.RouteToHandler(
 		"POST",
 		regexp.MustCompile(`^/subjects/[a-zA-Z0-9-_.]+/versions$`),
-		m.registerSubject(),
+		m.registerSubjectHandler(),
 	)
 	server.RouteToHandler(
 		"DELETE",
 		regexp.MustCompile(`^/subjects/[a-zA-Z0-9-_.]+$`),
-		m.deleteSubject(),
+		m.deleteSubjectHandler(),
 	)
 	server.RouteToHandler(
 		"PUT",
 		regexp.MustCompile(`^/config/[a-zA-Z0-9-_.]+$`),
-		m.setCompatibilityMode(),
+		m.setCompatibilityModeHandler(),
 	)
 
 	return server
 }
 
-func (m *SchemaRegMock) registerSubject() http.HandlerFunc {
+func (m *SchemaRegMock) registerSubjectHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if m.handledByErrorsInjector(RegisterSubject, w) {
 			return
@@ -170,38 +170,28 @@ func (m *SchemaRegMock) registerSchema(schema string) int {
 	return schemaId
 }
 
-func (m *SchemaRegMock) deleteSubject() http.HandlerFunc {
+func (m *SchemaRegMock) deleteSubjectHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if m.handledByErrorsInjector(DeleteSubject, w) {
 			return
 		}
 		subjectName := strings.Split(req.URL.Path, "/")[2]
 		queryParams, _ := url.ParseQuery(req.URL.RawQuery)
-		isHardDelete := queryParams.Get("permanent") == "true"
-		if isHardDelete {
-			if existingSubject, ok := m.SoftDeletedSubjects[subjectName]; ok {
-				m.HardDeletedSubjects[subjectName] = existingSubject
-				w.WriteHeader(200)
-				// TODO OK response
-			} else {
-				w.WriteHeader(500)
-				// TODO response if subject doesn't exist?
-			}
+		permanent := queryParams.Get("permanent") == "true"
+		versions, err := m.DeleteSubject(subjectName, permanent)
+		if err != nil {
+			w.WriteHeader(404)
+			_, _ = w.Write([]byte(err.Error()))
 		} else {
-			if existingSubject, ok := m.Subjects[subjectName]; ok {
-				delete(m.Subjects, subjectName)
-				m.SoftDeletedSubjects[subjectName] = existingSubject
-				w.WriteHeader(200)
-				// TODO OK response
-			} else {
-				w.WriteHeader(500)
-				// TODO response if subject doesn't exist?
-			}
+			w.WriteHeader(200)
+			versionsAsStrings := strings.Fields(fmt.Sprint(versions))
+			resBody := strings.Trim(strings.Join(versionsAsStrings, ","), "[]")
+			_, _ = w.Write([]byte(resBody))
 		}
 	}
 }
 
-func (m *SchemaRegMock) setCompatibilityMode() http.HandlerFunc {
+func (m *SchemaRegMock) setCompatibilityModeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if m.handledByErrorsInjector(SetCompatibilityMode, w) {
 			return
@@ -261,6 +251,40 @@ type InjectedError struct {
 
 func (m *SchemaRegMock) InjectError(error InjectedError) {
 	m.injectedErrors[error.OnApi] = &error
+}
+
+func (m *SchemaRegMock) DeleteSubject(subjectName string, permanent bool) ([]int, error) {
+	if permanent {
+		if existingSubject, ok := m.SoftDeletedSubjects[subjectName]; ok {
+			m.HardDeletedSubjects[subjectName] = existingSubject
+			return schemaVersions(existingSubject), nil
+		} else {
+			if m.Subjects[subjectName] != nil {
+				return nil, fmt.Errorf(`{"error_code":40405,"message":"Subject '%s' was not deleted first before being permanently deleted"}`, subjectName)
+			} else {
+				return nil, fmt.Errorf(`{"error_code":40401,"message":"Subject '%s' not found."}`, subjectName)
+			}
+		}
+	} else {
+		if existingSubject, ok := m.Subjects[subjectName]; ok {
+			delete(m.Subjects, subjectName)
+			m.SoftDeletedSubjects[subjectName] = existingSubject
+			return schemaVersions(existingSubject), nil
+		} else {
+			return nil, fmt.Errorf(`{"error_code":40401,"message":"Subject '%s' not found."}`, subjectName)
+		}
+	}
+}
+
+func schemaVersions(subject *Subject) []int {
+	keys := make([]int, len(subject.SchemaRefs))
+
+	i := 0
+	for k := range subject.SchemaRefs {
+		keys[i] = k
+		i++
+	}
+	return keys
 }
 
 func validateCompatibilityMode(mode v1beta1.CompatibilityMode) error {
