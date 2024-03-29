@@ -30,6 +30,17 @@ jobs:
           bump_each_commit: true
           search_commit_body: true
 
+      - name: Create tag
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ steps.tag_version.outputs.new_tag }}',
+              sha: context.sha
+            })
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
@@ -42,5 +53,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: '***/kafka-schema-operator:{{ steps.tag_version.outputs.version }}'
           labels: ${{ steps.meta.outputs.labels }}
