@@ -13,6 +13,8 @@ import (
 
 const namespace = "kafka-schema-operator-system"
 
+var dummy = 1
+
 var _ = Describe("controller", Ordered, func() {
 	BeforeAll(func() {
 		By("installing prometheus operator")
