@@ -30,6 +30,11 @@ jobs:
           bump_each_commit: true
           search_commit_body: true
 
+      - name: Print step outputs
+        run: |
+          echo "${{join(steps.semantic_version.outputs.*, ',')}}"
+        id: print_outputs
+
       - name: Create tag
         uses: actions/github-script@v7
         with:
