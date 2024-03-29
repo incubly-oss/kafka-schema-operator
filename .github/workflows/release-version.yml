@@ -31,13 +31,13 @@ jobs:
           search_commit_body: true
 
       - name: Create tag
-        uses: actions/github-script@v5
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: 'refs/tags/${{ steps.tag_version.outputs.new_tag }}',
+              ref: 'refs/tags/${{ steps.semantic_version.outputs.new_tag }}',
               sha: context.sha
             })
 
@@ -53,5 +53,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: '***/kafka-schema-operator:{{ steps.tag_version.outputs.version }}'
+          tags: '***/kafka-schema-operator:${{ steps.semantic_version.outputs.version }}'
           labels: ${{ steps.meta.outputs.labels }}
