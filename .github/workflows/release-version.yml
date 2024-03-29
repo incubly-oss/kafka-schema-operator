@@ -29,6 +29,7 @@ jobs:
           user_format_type: "csv"
           bump_each_commit: true
           search_commit_body: true
+          version_from_branch: true
 
       - name: Print step outputs
         run: |
@@ -44,7 +45,7 @@ jobs:
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: 'refs/tags/${{steps.semantic_version.outputs.version_tag}}',
+              ref: 'refs/tags/testversiontag-manual-${{steps.semantic_version.outputs.version}}',
               sha: context.sha
             })
 
