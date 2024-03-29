@@ -70,5 +70,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.tag_version.outputs.new_tag }},${{ steps.meta.outputs.tags }}
+          tags: kafka-schema-operator:${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
