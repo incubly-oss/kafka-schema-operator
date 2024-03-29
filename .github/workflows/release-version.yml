@@ -33,6 +33,8 @@ jobs:
       - name: Print step outputs
         run: |
           echo "${{join(steps.semantic_version.outputs.*, ',')}}"
+          echo "version = ${{steps.semantic_version.outputs.version}}
+          echo "version_tag = ${{steps.semantic_version.outputs.version_tag}}
         id: print_outputs
 
       - name: Create tag
@@ -42,7 +44,7 @@ jobs:
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: 'refs/tags/${{ steps.semantic_version.outputs.new_tag }}',
+              ref: 'refs/tags/${{steps.semantic_version.outputs.version_tag}}',
               sha: context.sha
             })
 
