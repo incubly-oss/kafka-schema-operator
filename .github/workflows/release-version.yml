@@ -47,6 +47,9 @@ jobs:
         run: |
           sed -i 's/version: .*/version: ${{ steps.tag_version.outputs.new_version }}/g' helm-charts/Chart.yaml
 
+      - name: Push updated helm version to git repo
+        uses: stefanzweifel/git-auto-commit-action@v5
+        
       - name: Install Helm
         uses: azure/setup-helm@v3
         env:
@@ -60,6 +63,3 @@ jobs:
           pages_branch: "gh-pages"
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Push updated helm version to git repo
-        uses: stefanzweifel/git-auto-commit-action@v5
