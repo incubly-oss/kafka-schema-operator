@@ -60,7 +60,7 @@ jobs:
     - name: Package and release Helm Chart
       uses: helm/chart-releaser-action@v1.6.0
       with:
-        charts_dir: "./helm-charts"
+        charts_dir: "./kafka-schema-operator"
         packages_with_index: true
         pages_branch: "gh-pages"
       env:

@@ -111,7 +111,7 @@ More details: [Confluent documentation](https://docs.confluent.io/platform/curre
 Operator maintains resource status will useful information about synchronization state
 of the resource, as well as single condition of type `"Ready"`.
 
-More details: [CRD (status)](./helm-charts/crds/kafka.incubly.oss_kafkaschemas.yaml).
+More details: [CRD (status)](charts/kafka-schema-operator/crds/kafka.incubly.oss_kafkaschemas.yaml).
 
 ## Getting Started
 
@@ -123,7 +123,7 @@ helm repo add kafka-schema-operator https://incubly-oss.github.io/kafka-schema-o
 helm upgrade --install kafka-schema-operator kafka-schema-operator/kafka-schema-operator --values values.yaml
 ```
 
-Config options: see comments in [default values](./helm-charts/values.yaml).
+Config options: see comments in [default values](charts/kafka-schema-operator/values.yaml).
 
 ## Contributing
 
