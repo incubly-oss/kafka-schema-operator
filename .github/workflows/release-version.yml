@@ -45,7 +45,7 @@ jobs:
 
       - name: Update helm version
         run: |
-          sed -i 's/version: .*/version: ${{ steps.tag_version.outputs.new_version }}/g' helm-charts/Chart.yaml
+          sed -i 's/version: .*/version: ${{ steps.tag_version.outputs.new_version }}/g' charts/kafka-schema-operator/Chart.yaml
 
       - name: Push updated helm version to git repo
         uses: stefanzweifel/git-auto-commit-action@v5
