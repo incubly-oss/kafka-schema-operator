@@ -37,4 +37,4 @@ spec:
               protocol: TCP
           resources:
 {{ .Values.operator.resources | toYaml | indent 12 }}
-      terminationGracePeriodSeconds: 12
+      terminationGracePeriodSeconds: 10
