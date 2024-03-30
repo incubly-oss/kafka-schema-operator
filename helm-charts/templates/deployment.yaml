@@ -18,7 +18,7 @@ spec:
       serviceAccountName: "{{ .Release.Name }}-service-account"
       containers:
         - name: {{ .Release.Name}}
-          image: "{{ .Values.operator.image }}:{{ .Values.operator.version }}"
+          image: "{{ .Values.operator.image }}:v{{ .Chart.Version  }}"
           imagePullPolicy: {{ .Values.operator.pullPolicy }}
           env:
             - name: SCHEMA_REGISTRY_BASE_URL

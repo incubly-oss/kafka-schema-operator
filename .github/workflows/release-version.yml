@@ -72,3 +72,22 @@ jobs:
           push: true
           tags: tomekincubly/kafka-schema-operator:${{ steps.tag_version.outputs.new_tag }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Update helm version
+        run: |
+          sed -i 's/version: .*/version: ${{ steps.tag_version.outputs.new_tag }}/g' helm-charts/Chart.yaml
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Package and release Helm Chart
+        uses: helm/chart-releaser-action@v1.6.0
+        with:
+          charts_dir: "./helm-charts"
+          packages_with_index: true
+          pages_branch: "gh-pages"
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Push updated helm version to git repo
+        uses: stefanzweifel/git-auto-commit-action@v5
