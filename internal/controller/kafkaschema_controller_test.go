@@ -173,7 +173,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 		It("Should do nothing if cleanup is DISABLED", func() {
 			aSchema := aSchemaWithCleanupPolicy(v1beta1.DISABLED)
 			By("When cleaning up schema with cleanup policy DISABLED")
-			Ω(whenDeletingPreviouslyCreatedSchema(ctx, aSchema)).
+			Ω(whenCreatingAndDeletingSchema(ctx, aSchema)).
 				ShouldNot(BeNil())
 
 			By("Then subject should NOT be deleted from registry")
@@ -182,7 +182,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 		It("Should soft-delete subject if cleanup is SOFT", func() {
 			aSchema := aSchemaWithCleanupPolicy(v1beta1.SOFT)
 			By("When cleaning up schema with cleanup policy SOFT")
-			Ω(whenDeletingPreviouslyCreatedSchema(ctx, aSchema)).
+			Ω(whenCreatingAndDeletingSchema(ctx, aSchema)).
 				ShouldNot(BeNil())
 
 			By("Then subject should be soft-deleted from registry")
@@ -192,13 +192,25 @@ var _ = Describe("KafkaSchema Controller", func() {
 		It("Should soft-delete and hard-delete subject if cleanup is SOFT", func() {
 			aSchema := aSchemaWithCleanupPolicy(v1beta1.HARD)
 			By("When cleaning up schema with cleanup policy HARD")
-			Ω(whenDeletingPreviouslyCreatedSchema(ctx, aSchema)).
+			Ω(whenCreatingAndDeletingSchema(ctx, aSchema)).
 				ShouldNot(BeNil())
 
 			By("Then subject should be soft- and hard-deleted from registry")
 			Expect(srMock.Subjects).Should(BeEmpty())
 			Expect(srMock.SoftDeletedSubjects).Should(HaveLen(1))
 			Expect(srMock.HardDeletedSubjects).Should(HaveLen(1))
+		})
+		It("Should handle errors correctly when trying to delete subject that doesn't exist", func() {
+			aSchema := aSchemaWithCleanupPolicy(v1beta1.SOFT)
+			By("Given schema resource was registered")
+			Ω(whenCreatingSchema(ctx, aSchema)).ShouldNot(BeNil())
+			By("But associated subject was manually deleted in registry")
+			Ω(srMock.DeleteSubject(aSchema.Spec.SubjectName, false)).ShouldNot(BeNil())
+			By("When deleting the resource")
+			res, err := whenDeletingExistingSchema(ctx, aSchema)
+			By("Then reconciliation shouldn't fail")
+			Expect(res).ShouldNot(BeNil())
+			Expect(err).Should(Succeed())
 		})
 	})
 	Context("Status", func() {
@@ -247,7 +259,7 @@ var _ = Describe("KafkaSchema Controller", func() {
 			})
 			aSchema := aSchemaWithCleanupPolicy(v1beta1.SOFT)
 			By("When trying to clean up resource")
-			_, err := whenDeletingPreviouslyCreatedSchema(ctx, aSchema)
+			_, err := whenCreatingAndDeletingSchema(ctx, aSchema)
 
 			By("And reconciliation fails")
 			Expect(err).ToNot(Succeed())
@@ -306,7 +318,17 @@ func expectReadyConditionWithReason(ctx context.Context, schema *v1beta1.KafkaSc
 	return status
 }
 
-func whenDeletingPreviouslyCreatedSchema(ctx context.Context, aSchema *v1beta1.KafkaSchema) (ctrl.Result, error) {
+func whenCreatingAndDeletingSchema(ctx context.Context, aSchema *v1beta1.KafkaSchema) (ctrl.Result, error) {
+
+	Ω(whenCreatingSchema(ctx, aSchema)).ShouldNot(BeNil())
+
+	By("-- verifying that subjects were created")
+	ExpectWithOffset(1, srMock.Subjects).Should(HaveLen(1))
+
+	return whenDeletingExistingSchema(ctx, aSchema)
+}
+
+func whenDeletingExistingSchema(ctx context.Context, aSchema *v1beta1.KafkaSchema) (ctrl.Result, error) {
 
 	lookupName := namespacedName(aSchema)
 
@@ -314,11 +336,6 @@ func whenDeletingPreviouslyCreatedSchema(ctx context.Context, aSchema *v1beta1.K
 		Client: k8sClient,
 		Scheme: k8sClient.Scheme(),
 	}
-
-	Ω(whenCreatingSchema(ctx, aSchema)).ShouldNot(BeNil())
-
-	By("-- verifying that subjects were created")
-	ExpectWithOffset(1, srMock.Subjects).Should(HaveLen(1))
 
 	By("-- deleting schema")
 	ExpectWithOffset(1, k8sClient.Delete(ctx, aSchema)).
