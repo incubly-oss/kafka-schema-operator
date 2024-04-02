@@ -2,10 +2,10 @@ name: Release version
 
 on:
   push:
-    branches: [ "9-add-semantic-versioning" ]
+    branches:
+      - master
 
 jobs:
-
   build:
     permissions: write-all
     runs-on: ubuntu-latest
@@ -19,8 +19,8 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          release_branches: "master,9-add-semantic-versioning"
-          tag_prefix: testversiontag
+          release_branches: "master"
+          tag_prefix: v
 
       - name: Log in to Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
