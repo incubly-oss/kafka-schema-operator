@@ -22,7 +22,7 @@ jobs:
       - name: Generate
         run: |
           make manifests
-          cp config/crd/bases/* helm-charts/crds/
+          cp config/crd/bases/* charts/kafka-schema-operator/crds/
           make generate
 
       - name: Lint
