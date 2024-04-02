@@ -2,7 +2,7 @@ operator:
   pullPolicy: IfNotPresent
   replicas: 1
   image: tomekincubly/kafka-schema-operator
-  version: v1.0.4
+  version: v1.0.5
   resources:
     limits:
       cpu: 500m
