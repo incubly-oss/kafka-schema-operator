@@ -46,6 +46,7 @@ jobs:
       - name: Update helm version
         run: |
           sed -i 's/version: .*/version: ${{ steps.tag_version.outputs.new_version }}/g' charts/kafka-schema-operator/Chart.yaml
+          sed -i 's/version: .*/version: v${{ steps.tag_version.outputs.new_version }}/g' charts/kafka-schema-operator/values.yaml
 
       - name: Install Helm
         uses: azure/setup-helm@v3
