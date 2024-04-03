@@ -3,6 +3,16 @@ entries:
   kafka-schema-operator:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2024-04-03T09:38:39.060839147Z"
+    description: Operator to maintain kafka schemas via CRD
+    digest: c9d622e32919dc6cb2fc48517c628aa86469ce7a743155aa2e3a2e5f9a508391
+    name: kafka-schema-operator
+    type: application
+    urls:
+    - kafka-schema-operator-1.0.6.tgz
+    version: 1.0.6
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2024-04-02T17:57:28.222199913Z"
     description: Operator to maintain kafka schemas via CRD
     digest: d49f98f4598331311ec0dc1ee54c3b70848137593faa5c8692a8a47134a1f70d
@@ -51,4 +61,4 @@ entries:
     urls:
     - https://incubly-oss.github.io/kafka-schema-operator/kafka-schema-operator-1.0.0.tgz
     version: 1.0.0
-generated: "2024-04-02T17:57:28.222233426Z"
+generated: "2024-04-03T09:38:39.060865977Z"
