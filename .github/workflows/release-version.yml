@@ -35,13 +35,14 @@ jobs:
       - name: Build
         run: make build
 
-      - name: Bump version and push tag
+      - name: Calculate new version tag (dry-run)
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: "master"
           tag_prefix: v
+          dry_run: 'true'
 
 #      - name: Log in to Docker Hub
 #        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
@@ -69,11 +70,6 @@ jobs:
           sed -i 's/version: .*/version: ${{ steps.tag_version.outputs.new_version }}/g' charts/kafka-schema-operator/Chart.yaml
           sed -i 's/version: .*/version: v${{ steps.tag_version.outputs.new_version }}/g' charts/kafka-schema-operator/values.yaml
 
-#      - name: Install Helm
-#        uses: azure/setup-helm@v3
-#        env:
-#          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
       - name: Configure Git
         run: |
           git config user.name "$GITHUB_ACTOR"
@@ -84,7 +80,21 @@ jobs:
           git pull --tags
           git add charts/kafka-schema-operator/
           git commit -m "AUTOMATED: Updated helm version to ${{ steps.tag_version.outputs.new_version }}"
-          git push origin HEAD:refs/tags/v${{ steps.tag_version.outputs.new_version }}
+#          git push origin HEAD:refs/tags/v${{ steps.tag_version.outputs.new_version }}
+
+      - name: Bump version and push tag
+        id: tag_push
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_branches: "master"
+          tag_prefix: v
+
+#      - name: Install Helm
+#        uses: azure/setup-helm@v3
+#        env:
+#          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
 
 #
 #      - name: Package and release Helm Chart
