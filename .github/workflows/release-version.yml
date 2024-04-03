@@ -81,6 +81,7 @@ jobs:
 
       - name: Push updated helm version to git repo
         run: |
+          git pull --tags
           git add charts/kafka-schema-operator/
           git commit -m "AUTOMATED: Updated helm version to ${{ steps.tag_version.outputs.new_version }}"
           git push origin HEAD:refs/tags/v${{ steps.tag_version.outputs.new_version }}
