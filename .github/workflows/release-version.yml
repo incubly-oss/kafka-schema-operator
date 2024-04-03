@@ -74,17 +74,17 @@ jobs:
 #        env:
 #          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
       - name: Push updated helm version to git repo
         run: |
           git add charts/kafka-schema-operator/
-          git commit -m "Updated helm version to ${{ steps.tag_version.outputs.new_version }}"
+          git commit -m "AUTOMATED: Updated helm version to ${{ steps.tag_version.outputs.new_version }}"
           git push origin HEAD:refs/tags/v{{ steps.tag_version.outputs.new_version }}
-       
 
-#      - name: Configure Git
-#        run: |
-#          git config user.name "$GITHUB_ACTOR"
-#          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 #
 #      - name: Package and release Helm Chart
 #        uses: helm/chart-releaser-action@v1.6.0
