@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - 9-add-semantic-versioning-fix2
 
 jobs:
   build:
@@ -44,26 +43,26 @@ jobs:
           tag_prefix: v
           dry_run: 'true'
 
-#      - name: Log in to Docker Hub
-#        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
-#        with:
-#          username: ${{ secrets.DOCKERHUB_USERNAME }}
-#          password: ${{ secrets.DOCKERHUB_TOKEN }}
-#
-#      - name: Extract Docker metadata
-#        id: meta
-#        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-#        with:
-#          images: tomekincubly/kafka-schema-operator
-#
-#      - name: Build and push Docker
-#        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
-#        with:
-#          context: .
-#          file: ./Dockerfile
-#          push: true
-#          tags: tomekincubly/kafka-schema-operator:${{ steps.tag_version.outputs.new_tag }}
-#          labels: ${{ steps.meta.outputs.labels }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: tomekincubly/kafka-schema-operator
+
+      - name: Build and push Docker
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: tomekincubly/kafka-schema-operator:${{ steps.tag_version.outputs.new_tag }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Update helm version
         run: |
@@ -75,34 +74,24 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Push updated helm version to git repo
+      - name: Push updated helm version and tag to git repo
         run: |
           git pull --tags
           git add charts/kafka-schema-operator/
           git commit -m "AUTOMATED: Updated helm version to ${{ steps.tag_version.outputs.new_version }}"
           git push origin HEAD:refs/tags/v${{ steps.tag_version.outputs.new_version }}
 
-#      - name: Bump version and push tag
-#        id: tag_push
-#        uses: mathieudutour/github-tag-action@v6.2
-#        with:
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
-#          release_branches: "master"
-#          tag_prefix: v
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-#      - name: Install Helm
-#        uses: azure/setup-helm@v3
-#        env:
-#          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-
-#
-#      - name: Package and release Helm Chart
-#        uses: helm/chart-releaser-action@v1.6.0
-#        with:
-#          packages_with_index: true
-#          pages_branch: "gh-pages"
-#        env:
-#          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Package and release Helm Chart
+        uses: helm/chart-releaser-action@v1.6.0
+        with:
+          packages_with_index: true
+          pages_branch: "gh-pages"
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
 
