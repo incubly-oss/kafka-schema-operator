@@ -82,7 +82,7 @@ jobs:
           git push origin HEAD:refs/tags/v${{ steps.tag_version.outputs.new_version }}
 
       - name: Install Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
