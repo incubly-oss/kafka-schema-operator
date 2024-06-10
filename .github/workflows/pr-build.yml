@@ -46,7 +46,7 @@ jobs:
           images: tomekincubly/kafka-schema-operator
 
       - name: Build and push Docker
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
         with:
           context: .
           file: ./Dockerfile
