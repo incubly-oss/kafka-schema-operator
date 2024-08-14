@@ -13,7 +13,7 @@ var avroExample string
 var avroExampleCanonical string
 
 func TestNormalizeAvroSchema(t *testing.T) {
-	reg, _ := regexp.Compile("\\s")
+	reg, _ := regexp.Compile(`\s`)
 	expected := reg.ReplaceAllString(avroExampleCanonical, "")
 	normalized, err := normalizeAvroSchema(avroExample)
 	if err != nil {

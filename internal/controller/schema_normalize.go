@@ -2,10 +2,11 @@ package controller
 
 import (
 	"fmt"
-	"github.com/hamba/avro/v2"
-	"incubly.oss/kafka-schema-operator/api/v1beta1"
 	"os"
 	"strconv"
+
+	"github.com/hamba/avro/v2"
+	"incubly.oss/kafka-schema-operator/api/v1beta1"
 )
 
 func normalizeAvroSchema(srcSchema string) (string, error) {
