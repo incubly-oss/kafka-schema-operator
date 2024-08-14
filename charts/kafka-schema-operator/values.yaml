@@ -18,6 +18,9 @@ schemaRegistry:
 # global cleanup policy for the operator, Overridable on resource level
 defaultCleanupPolicy: DISABLED
 
+# global schema normalize option. Currently work only for AVRO. Overridable on resource level
+defaultNormalize: false
+
 # reconciliation loop requeue delay. Defaults to 1m (60s).
 # Format: a possibly signed sequence of decimal numbers,
 # each with optional fraction and a unit suffix,

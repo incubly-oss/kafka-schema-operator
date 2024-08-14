@@ -122,10 +122,18 @@ func (r *KafkaSchemaReconciler) reconcileResource(
 		}
 	}
 
+	maybeNormalizedSchema, err := GetMaybeNormalizedSchema(spec.Data)
+
+	if err != nil {
+		return r.logError(logger, err, ctx, res,
+			v1beta1.NormalizeSchema,
+			"Failed to normalize schema")
+	}
+
 	schemaId, err := srClient.RegisterSchema(
 		subjectName,
 		schemareg.RegisterSchemaReq{
-			Schema:     spec.Data.Schema,
+			Schema:     maybeNormalizedSchema,
 			SchemaType: spec.Data.Format,
 		},
 	)
