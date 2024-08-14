@@ -1,0 +1,51 @@
+{
+  "name": "orders.car",
+  "type": "record",
+  "fields": [
+    {
+      "name": "model",
+      "type": "string"
+    },
+    {
+      "name": "make",
+      "type": "string"
+    },
+    {
+      "name": "year",
+      "type": "float"
+    },
+    {
+      "name": "categories",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "string"
+        }
+      ]
+    },
+    {
+      "name": "tags",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "name": "orders.tags_record",
+            "type": "record",
+            "fields": [
+              {
+                "name": "key",
+                "type": "string"
+              },
+              {
+                "name": "value",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

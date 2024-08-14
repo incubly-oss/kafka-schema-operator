@@ -1,0 +1,59 @@
+{
+  "type": "record",
+  "name": "car",
+  "namespace": "orders",
+  "fields": [
+    {
+      "name": "model",
+      "type": {
+        "type": "string"
+      }
+    },
+    {
+      "type": "string",
+      "name": "make"
+    },
+    {
+      "type": "float",
+      "name": "year"
+    },
+    {
+      "name": "categories",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "tags",
+      "namespace": "product",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "name": "tags_record",
+            "type": "record",
+            "fields": [
+              {
+                "name": "key",
+                "type": "string"
+              },
+              {
+                "name": "value",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      ],
+      "default": null
+    }
+  ]
+}
