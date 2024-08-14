@@ -65,6 +65,7 @@ type KafkaSchemaData struct {
 	/*
 		Should Operator normalize the schema.
 		https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#schema-normalization
+		https://avro.apache.org/docs/1.11.1/specification/#parsing-canonical-form-for-schemas
 		Currently supported only for AVRO. Otherwise, it's ignored
 	*/
 	Normalize bool `json:"normalize,omitempty"`
