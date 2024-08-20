@@ -61,6 +61,14 @@ type KafkaSchemaData struct {
 	*/
 	// +kubebuilder:validation:Enum=NONE;BACKWARD;BACKWARD_TRANSITIVE;FORWARD;FORWARD_TRANSITIVE;FULL;FULL_TRANSITIVE
 	Compatibility CompatibilityMode `json:"compatibility,omitempty"`
+
+	/*
+		Should Operator normalize the schema.
+		https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#schema-normalization
+		https://avro.apache.org/docs/1.11.1/specification/#parsing-canonical-form-for-schemas
+		Currently supported only for AVRO. Otherwise, it's ignored
+	*/
+	Normalize bool `json:"normalize,omitempty"`
 }
 
 type SchemaRegistry struct {
@@ -150,6 +158,7 @@ var (
 	Complete             = ReadyReason{"Complete", metav1.ConditionTrue}
 	NameStrategy         = ReadyReason{"NameStrategy", metav1.ConditionFalse}
 	SchemaRegistryClient = ReadyReason{"SchemaRegistryClient", metav1.ConditionFalse}
+	NormalizeSchema      = ReadyReason{"NormalizeSchema", metav1.ConditionFalse}
 	RegisterSchema       = ReadyReason{"RegisterSchema", metav1.ConditionFalse}
 	ResourceUpdate       = ReadyReason{"ResourceUpdate", metav1.ConditionFalse}
 	SetCompatibilityMode = ReadyReason{"SetCompatibilityMode", metav1.ConditionFalse}

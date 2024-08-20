@@ -14,140 +14,147 @@ spec:
     singular: kafkaschema
   scope: Namespaced
   versions:
-  - name: v1beta1
-    schema:
-      openAPIV3Schema:
-        description: KafkaSchema is the Schema for the kafkaschemas API
-        properties:
-          apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
-              may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-            type: string
-          kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
-              Cannot be updated.
-              In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: KafkaSchemaSpec defines the desired state of KafkaSchema
-            properties:
-              cleanupPolicy:
-                description: |-
-                  CleanupPolicy defines interaction with schema registry when resource is deleted:
-                  DISABLED: no effect - controller won't attend to remove schemas and subjects
-                  SOFT: soft deletion - controller will delete subjects but leave schemas untouched
-                  HARD: hard deletion - controller will delete subjects and referenced schemas. NOTE: if schema is referenced by another subject, schema registry won't effectively delete it
-
-
-                  If not provided, controller will fall back to its default (configurable) behaviour
-                enum:
-                - DISABLED
-                - SOFT
-                - HARD
-                type: string
-              data:
-                description: |-
-                  Schema isa definition of schema associated with Kafka topic value.
-                  It's mandatory since Controller assumes that you primarily want to use
-                  associated custom resources for schemas representing topic values.
-                properties:
-                  compatibility:
-                    allOf:
-                    - enum:
-                      - NONE
-                      - BACKWARD
-                      - BACKWARD_TRANSITIVE
-                      - FORWARD
-                      - FORWARD_TRANSITIVE
-                      - FULL
-                      - FULL_TRANSITIVE
-                    - enum:
-                      - NONE
-                      - BACKWARD
-                      - BACKWARD_TRANSITIVE
-                      - FORWARD
-                      - FORWARD_TRANSITIVE
-                      - FULL
-                      - FULL_TRANSITIVE
-                    description: |-
-                      Compatibility defines schema compatibility mode for the subject.
-                      If not provided, subject will inherit default compatibility mode defined in schema registry
-                      See [official Confluent documentation](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html)
-                      for details.
-                    type: string
-                  format:
-                    description: Format of the provided schema
-                    enum:
-                    - AVRO
-                    - JSON
-                    - PROTOBUF
-                    type: string
-                  schema:
-                    description: Schema payload. Format depends on associated "format"
-                      field
-                    type: string
-                required:
-                - format
-                - schema
-                type: object
-              namingStrategy:
-                description: |-
-                  NamingStrategy is used to define name for the schema subject.
-                  It follows the [Confluent subject name strategy](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#subject-name-strategy).
-
-
-                  Possible values:
-                  io.confluent.kafka.serializers.subject.TopicNameStrategy: uses [TopicNameStrategy](https://github.com/marcintustin/kafka-connect-json-avro-converter/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/subject/TopicNameStrategy.java#L35). Subject will have name "<TopicName>-value"
-                  io.confluent.kafka.serializers.subject.RecordNameStrategy: uses [RecordNameStrategy](https://github.com/marcintustin/kafka-connect-json-avro-converter/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/subject/RecordNameStrategy.java#L58). Subject will have name "<RecordName>". NOTE: It only works with AVRO records/schemas!
-                  io.confluent.kafka.serializers.subject.TopicRecordNameStrategy: uses [TopicRecordNameStrategy](https://github.com/marcintustin/kafka-connect-json-avro-converter/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/subject/TopicRecordNameStrategy.java#L39). It's similar to RECORD, but prefixes the subject name with topic: "<TopicName>-<RecordName>"
-
-
-                  If not provided, operator will try to create subject with name defined by SubjectName.
-                enum:
-                - io.confluent.kafka.serializers.subject.TopicNameStrategy
-                - io.confluent.kafka.serializers.subject.RecordNameStrategy
-                - io.confluent.kafka.serializers.subject.TopicRecordNameStrategy
-                type: string
-              schemaRegistry:
-                description: SchemaRegistry optionally overrides controller default
-                  reference to schema registry it targets
-                properties:
-                  baseUrl:
-                    description: |-
-                      BaseUrl of the schema registry this schema should be registered to.
-                      If not provided, controller will fall back to default configuration
-                    type: string
-                type: object
-              subjectName:
-                description: SubjectName is mandatory if NamingStrategy is not provided.
-                  Otherwise, it's ignored
-                type: string
-              topicName:
-                description: TopicName is mandatory if NamingStrategy is set to "Topic"
-                  or "TopicRecord". Otherwise, it's ignored
-                type: string
-            required:
-            - data
-            type: object
-          status:
-            description: KafkaSchemaStatus defines the observed state of KafkaSchema
-            properties:
-              conditions:
-                description: |-
-                  Represents observations of the current state of KafkaSchema.
-                  Operator uses single condition with type="Ready" and statuses:
-                  True (reconciliation complete), False (reconciliation failed)
-                  and Unknown (reconciliation in progress).
-                items:
-                  description: "Condition contains details for one aspect of the current
+    - name: v1beta1
+      schema:
+        openAPIV3Schema:
+          description: KafkaSchema is the Schema for the kafkaschemas API
+          properties:
+            apiVersion:
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+              type: string
+            kind:
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: KafkaSchemaSpec defines the desired state of KafkaSchema
+              properties:
+                cleanupPolicy:
+                  description: |-
+                    CleanupPolicy defines interaction with schema registry when resource is deleted:
+                    DISABLED: no effect - controller won't attend to remove schemas and subjects
+                    SOFT: soft deletion - controller will delete subjects but leave schemas untouched
+                    HARD: hard deletion - controller will delete subjects and referenced schemas. NOTE: if schema is referenced by another subject, schema registry won't effectively delete it
+                    
+                    
+                    If not provided, controller will fall back to its default (configurable) behaviour
+                  enum:
+                    - DISABLED
+                    - SOFT
+                    - HARD
+                  type: string
+                data:
+                  description: |-
+                    Schema isa definition of schema associated with Kafka topic value.
+                    It's mandatory since Controller assumes that you primarily want to use
+                    associated custom resources for schemas representing topic values.
+                  properties:
+                    compatibility:
+                      allOf:
+                        - enum:
+                            - NONE
+                            - BACKWARD
+                            - BACKWARD_TRANSITIVE
+                            - FORWARD
+                            - FORWARD_TRANSITIVE
+                            - FULL
+                            - FULL_TRANSITIVE
+                        - enum:
+                            - NONE
+                            - BACKWARD
+                            - BACKWARD_TRANSITIVE
+                            - FORWARD
+                            - FORWARD_TRANSITIVE
+                            - FULL
+                            - FULL_TRANSITIVE
+                      description: |-
+                        Compatibility defines schema compatibility mode for the subject.
+                        If not provided, subject will inherit default compatibility mode defined in schema registry
+                        See [official Confluent documentation](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html)
+                        for details.
+                      type: string
+                    format:
+                      description: Format of the provided schema
+                      enum:
+                        - AVRO
+                        - JSON
+                        - PROTOBUF
+                      type: string
+                    normalize:
+                      description: |-
+                        Should Operator normalize the schema.
+                        https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#schema-normalization
+                        https://avro.apache.org/docs/1.11.1/specification/#parsing-canonical-form-for-schemas
+                        Currently supported only for AVRO. Otherwise, it's ignored
+                      type: boolean
+                    schema:
+                      description: Schema payload. Format depends on associated "format"
+                        field
+                      type: string
+                  required:
+                    - format
+                    - schema
+                  type: object
+                namingStrategy:
+                  description: |-
+                    NamingStrategy is used to define name for the schema subject.
+                    It follows the [Confluent subject name strategy](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#subject-name-strategy).
+                    
+                    
+                    Possible values:
+                    io.confluent.kafka.serializers.subject.TopicNameStrategy: uses [TopicNameStrategy](https://github.com/marcintustin/kafka-connect-json-avro-converter/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/subject/TopicNameStrategy.java#L35). Subject will have name "<TopicName>-value"
+                    io.confluent.kafka.serializers.subject.RecordNameStrategy: uses [RecordNameStrategy](https://github.com/marcintustin/kafka-connect-json-avro-converter/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/subject/RecordNameStrategy.java#L58). Subject will have name "<RecordName>". NOTE: It only works with AVRO records/schemas!
+                    io.confluent.kafka.serializers.subject.TopicRecordNameStrategy: uses [TopicRecordNameStrategy](https://github.com/marcintustin/kafka-connect-json-avro-converter/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/subject/TopicRecordNameStrategy.java#L39). It's similar to RECORD, but prefixes the subject name with topic: "<TopicName>-<RecordName>"
+                    
+                    
+                    If not provided, operator will try to create subject with name defined by SubjectName.
+                  enum:
+                    - io.confluent.kafka.serializers.subject.TopicNameStrategy
+                    - io.confluent.kafka.serializers.subject.RecordNameStrategy
+                    - io.confluent.kafka.serializers.subject.TopicRecordNameStrategy
+                  type: string
+                schemaRegistry:
+                  description: SchemaRegistry optionally overrides controller default
+                    reference to schema registry it targets
+                  properties:
+                    baseUrl:
+                      description: |-
+                        BaseUrl of the schema registry this schema should be registered to.
+                        If not provided, controller will fall back to default configuration
+                      type: string
+                  type: object
+                subjectName:
+                  description: SubjectName is mandatory if NamingStrategy is not provided.
+                    Otherwise, it's ignored
+                  type: string
+                topicName:
+                  description: TopicName is mandatory if NamingStrategy is set to "Topic"
+                    or "TopicRecord". Otherwise, it's ignored
+                  type: string
+              required:
+                - data
+              type: object
+            status:
+              description: KafkaSchemaStatus defines the observed state of KafkaSchema
+              properties:
+                conditions:
+                  description: |-
+                    Represents observations of the current state of KafkaSchema.
+                    Operator uses single condition with type="Ready" and statuses:
+                    True (reconciliation complete), False (reconciliation failed)
+                    and Unknown (reconciliation in progress).
+                  items:
+                    description: "Condition contains details for one aspect of the current
                     state of this API Resource.\n---\nThis struct is intended for
                     direct use as an array at the field path .status.conditions.  For
                     example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
@@ -157,96 +164,96 @@ spec:
                     \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
                     patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
                     \   // other fields\n\t}"
-                  properties:
-                    lastTransitionTime:
-                      description: |-
-                        lastTransitionTime is the last time the condition transitioned from one status to another.
-                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
-                      format: date-time
-                      type: string
-                    message:
-                      description: |-
-                        message is a human readable message indicating details about the transition.
-                        This may be an empty string.
-                      maxLength: 32768
-                      type: string
-                    observedGeneration:
-                      description: |-
-                        observedGeneration represents the .metadata.generation that the condition was set based upon.
-                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
-                        with respect to the current state of the instance.
-                      format: int64
-                      minimum: 0
-                      type: integer
-                    reason:
-                      description: |-
-                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
-                        Producers of specific condition types may define expected values and meanings for this field,
-                        and whether the values are considered a guaranteed API.
-                        The value should be a CamelCase string.
-                        This field may not be empty.
-                      maxLength: 1024
-                      minLength: 1
-                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
-                      type: string
-                    status:
-                      description: status of the condition, one of True, False, Unknown.
-                      enum:
-                      - "True"
-                      - "False"
-                      - Unknown
-                      type: string
-                    type:
-                      description: |-
-                        type of condition in CamelCase or in foo.example.com/CamelCase.
-                        ---
-                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-                        useful (see .node.status.conditions), the ability to deconflict is important.
-                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
-                      maxLength: 316
-                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
-                      type: string
-                  required:
-                  - lastTransitionTime
-                  - message
-                  - reason
-                  - status
-                  - type
-                  type: object
-                type: array
-                x-kubernetes-list-map-keys:
-                - type
-                x-kubernetes-list-type: map
-              healthy:
-                description: Healthy boolean reflects current health of the resource
-                type: boolean
-              keySchemaId:
-                description: SchemaId is the identifier of the schema in the schema
-                  registry
-                type: integer
-              lastRetryTsEpoch:
-                description: LastRetryTsEpoch timestamp of last retry attempt, in
-                  epoch millis
-                format: int64
-                type: integer
-              retryCount:
-                description: RetryCount is incremented on any subsequent failure (and
-                  reset to 0 on each success)
-                type: integer
-              schemaRegistryUrl:
-                description: SchemaRegistryUrl is an effective URL of the schema registry
-                  this resource interacts with
-                type: string
-              status:
-                description: Status is equivalent to Healthy, but with format based
-                  on pod status
-                type: string
-              subject:
-                description: Subject is the schema registry subject (based on NamingStrategy)
-                type: string
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
+                    properties:
+                      lastTransitionTime:
+                        description: |-
+                          lastTransitionTime is the last time the condition transitioned from one status to another.
+                          This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                        format: date-time
+                        type: string
+                      message:
+                        description: |-
+                          message is a human readable message indicating details about the transition.
+                          This may be an empty string.
+                        maxLength: 32768
+                        type: string
+                      observedGeneration:
+                        description: |-
+                          observedGeneration represents the .metadata.generation that the condition was set based upon.
+                          For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                          with respect to the current state of the instance.
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      reason:
+                        description: |-
+                          reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                          Producers of specific condition types may define expected values and meanings for this field,
+                          and whether the values are considered a guaranteed API.
+                          The value should be a CamelCase string.
+                          This field may not be empty.
+                        maxLength: 1024
+                        minLength: 1
+                        pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                        type: string
+                      status:
+                        description: status of the condition, one of True, False, Unknown.
+                        enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                        type: string
+                      type:
+                        description: |-
+                          type of condition in CamelCase or in foo.example.com/CamelCase.
+                          ---
+                          Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+                          useful (see .node.status.conditions), the ability to deconflict is important.
+                          The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                        maxLength: 316
+                        pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                    type: object
+                  type: array
+                  x-kubernetes-list-map-keys:
+                    - type
+                  x-kubernetes-list-type: map
+                healthy:
+                  description: Healthy boolean reflects current health of the resource
+                  type: boolean
+                keySchemaId:
+                  description: SchemaId is the identifier of the schema in the schema
+                    registry
+                  type: integer
+                lastRetryTsEpoch:
+                  description: LastRetryTsEpoch timestamp of last retry attempt, in
+                    epoch millis
+                  format: int64
+                  type: integer
+                retryCount:
+                  description: RetryCount is incremented on any subsequent failure (and
+                    reset to 0 on each success)
+                  type: integer
+                schemaRegistryUrl:
+                  description: SchemaRegistryUrl is an effective URL of the schema registry
+                    this resource interacts with
+                  type: string
+                status:
+                  description: Status is equivalent to Healthy, but with format based
+                    on pod status
+                  type: string
+                subject:
+                  description: Subject is the schema registry subject (based on NamingStrategy)
+                  type: string
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
