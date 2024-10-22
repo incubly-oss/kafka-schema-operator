@@ -2,5 +2,5 @@ apiVersion: v2
 name: kafka-schema-operator
 description: Operator to maintain kafka schemas via CRD
 type: application
-version: 0.0.0 #TO BE UPDATED BY CI
+version: 1.1.0
 appVersion: "1.0.0"
