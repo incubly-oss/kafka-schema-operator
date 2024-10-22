@@ -30,3 +30,8 @@ defaultNormalize: false
 # Negative value - don't requeue (disable reconciliation loop)
 # Zero - requeue with exponential backoff
 requeueDelay: 1m
+
+deploymentLabels: {}
+deploymentAnnotations: {}
+podLabels: {}
+podAnnotations: {}

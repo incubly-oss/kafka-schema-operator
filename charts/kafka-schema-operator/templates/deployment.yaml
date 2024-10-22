@@ -5,6 +5,13 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kubernetes.labels" . | nindent 4 }}
+    {{- with .Values.deploymentLabels }}
+    {{-  toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- with .Values.deploymentAnnotations }}
+    {{-  toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.operator.replicas }}
   selector:
@@ -13,7 +20,14 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "kubernetes.selectorLabels" . | nindent 8 }}
+        {{- include "kubernetes.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{-  toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{-  toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: "{{ .Release.Name }}-service-account"
       containers:
